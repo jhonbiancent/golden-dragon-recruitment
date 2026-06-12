@@ -48,6 +48,7 @@ export default function Home() {
     resumeUrl: "",
     coverLetter: "",
     noticePeriod: "Immediate",
+    customPosition: "",
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -120,6 +121,24 @@ export default function Home() {
     setIsModalOpen(true);
     setSubmitSuccess(false);
     setErrorMessage("");
+    setFormData(prev => ({ ...prev, customPosition: "" }));
+  };
+
+  const handleOpenGeneralApply = () => {
+    setSelectedJob({
+      id: "general",
+      title: "General Application",
+      department: "General",
+      location: "Remote / Multiple",
+      type: "Full-time / Contract",
+      experienceRequired: "Any",
+      description: "Submit your profile for future opportunities that match your skills.",
+      status: "active",
+    });
+    setIsModalOpen(true);
+    setSubmitSuccess(false);
+    setErrorMessage("");
+    setFormData(prev => ({ ...prev, customPosition: "" }));
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -159,6 +178,7 @@ export default function Home() {
           resumeUrl: "",
           coverLetter: "",
           noticePeriod: "Immediate",
+          customPosition: "",
         });
       } else {
         setErrorMessage(data.error || "Failed to submit application.");
@@ -212,6 +232,26 @@ export default function Home() {
           <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
             Join a fast-growing team of innovators, engineers, and creators. We value ambition, diversity, and pixel-perfect digital experiences.
           </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+            <button 
+              onClick={() => {
+                const element = document.getElementById('open-positions');
+                element?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="px-8 py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all shadow-lg shadow-indigo-500/25 flex items-center space-x-2 group"
+            >
+              <span>View Openings</span>
+              <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            </button>
+            <button 
+              onClick={handleOpenGeneralApply}
+              className="px-8 py-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 font-bold transition-all flex items-center space-x-2"
+            >
+              <span>General Application</span>
+              <Send className="h-4 w-4 text-slate-500" />
+            </button>
+          </div>
 
           {/* Job Search bar */}
           <div className="max-w-xl mx-auto glass-card rounded-2xl p-2 shadow-2xl flex flex-col md:flex-row items-center gap-2">
@@ -384,6 +424,25 @@ export default function Home() {
                     <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800 pb-2">
                       Personal Details
                     </h4>
+                    
+                    {selectedJob.id === "general" && (
+                      <div className="pb-2">
+                        <label htmlFor="customPosition" className="block text-xs font-semibold text-indigo-400 mb-1.5 flex items-center">
+                          <Sparkles className="h-3 w-3 mr-1.5" />
+                          What position are you interested in? *
+                        </label>
+                        <input
+                          id="customPosition"
+                          type="text"
+                          name="customPosition"
+                          required
+                          value={formData.customPosition}
+                          onChange={handleInputChange}
+                          placeholder="e.g. Senior Marketing Lead, Creative Director, etc."
+                          className="w-full bg-indigo-500/5 border border-indigo-500/20 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none shadow-inner"
+                        />
+                      </div>
+                    )}
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>

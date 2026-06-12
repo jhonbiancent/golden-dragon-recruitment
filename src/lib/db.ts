@@ -314,9 +314,9 @@ export async function getApplicants(): Promise<Applicant[]> {
   }
 }
 
-export async function addApplicant(newApplicant: Omit<Applicant, "id" | "status" | "notes" | "appliedAt" | "positionTitle">): Promise<Applicant> {
+export async function addApplicant(newApplicant: Omit<Applicant, "id" | "status" | "notes" | "appliedAt" | "positionTitle"> & { customPosition?: string }): Promise<Applicant> {
   const position = getJobById(newApplicant.positionId);
-  const positionTitle = position ? position.title : "General Position";
+  const positionTitle = newApplicant.customPosition || (position ? position.title : "General Position");
   const id = `app-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   const appliedAt = new Date().toISOString();
 

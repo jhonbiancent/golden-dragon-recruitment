@@ -5,7 +5,7 @@ export async function POST(request: Request) {
   try {
     await seedSupabaseIfNeeded();
     const body = await request.json();
-    const { name, email, phone, positionId, experience, linkedin, portfolio, resumeUrl, coverLetter, noticePeriod } = body;
+    const { name, email, phone, positionId, experience, linkedin, portfolio, resumeUrl, coverLetter, noticePeriod, customPosition } = body;
 
     // Basic validation
     if (!name || !email || !phone || !positionId || !experience || !coverLetter || !noticePeriod) {
@@ -26,6 +26,7 @@ export async function POST(request: Request) {
       resumeUrl: resumeUrl || "",
       coverLetter,
       noticePeriod,
+      customPosition: customPosition || "",
     });
 
     // Optionally: Here, you could post this data to Google Sheets via fetch to an Apps Script Web App URL if configured.
