@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const applicant = addApplicant({
+    const applicant = await addApplicant({
       name,
       email,
       phone,

@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { getApplicants, updateApplicantStatus, addApplicantNote } from "@/lib/db";
+import { getApplicants, updateApplicantStatus, addApplicantNote, seedSupabaseIfNeeded } from "@/lib/db";
 
 export async function GET() {
   try {
-    const applicants = getApplicants();
+    await seedSupabaseIfNeeded();
+    const applicants = await getApplicants();
     return NextResponse.json({ applicants });
   } catch (error) {
     console.error("API Error fetching applicants:", error);
@@ -26,7 +27,7 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const success = updateApplicantStatus(id, status);
+    const success = await updateApplicantStatus(id, status);
     if (!success) {
       return NextResponse.json(
         { error: "Applicant not found" },
@@ -56,7 +57,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const newNote = addApplicantNote(id, note);
+    const newNote = await addApplicantNote(id, note);
     if (!newNote) {
       return NextResponse.json(
         { error: "Applicant not found" },

@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { supabase } from "./supabaseClient";
 
 export interface RecruiterNote {
   id: string;
@@ -30,7 +31,7 @@ export interface JobPosition {
   title: string;
   department: string;
   location: string;
-  type: string; // "Full-time" | "Contract" | "Remote" | etc.
+  type: string;
   experienceRequired: string;
   description: string;
   salaryRange?: string;
@@ -40,7 +41,7 @@ export interface JobPosition {
 const DATA_DIR = path.join(process.cwd(), "data");
 const APPLICANTS_FILE = path.join(DATA_DIR, "applicants.json");
 
-const MOCK_JOBS: JobPosition[] = [
+const CORPORATE_JOBS: JobPosition[] = [
   {
     id: "sr-frontend",
     title: "Senior Frontend Engineer",
@@ -53,41 +54,63 @@ const MOCK_JOBS: JobPosition[] = [
     status: "active",
   },
   {
-    id: "product-mgr",
-    title: "Technical Product Manager",
-    department: "Product",
-    location: "Remote (US/Canada)",
-    type: "Full-time",
-    experienceRequired: "3+ years",
-    description: "Seeking a TPM to drive technical products. You will collaborate with engineering, design, and operations teams to ship features that empower our recruiters and customers.",
-    salaryRange: "$130,000 - $160,000",
-    status: "active",
-  },
-  {
-    id: "ui-designer",
-    title: "Lead UI/UX Designer",
-    department: "Design",
-    location: "New York, NY (On-site)",
+    id: "hr-partner",
+    title: "HR Business Partner",
+    department: "Human Resources",
+    location: "New York, NY (Hybrid)",
     type: "Full-time",
     experienceRequired: "4+ years",
-    description: "Join our design studio to craft state-of-the-art interactive platforms. We value creativity, pixel-perfection, design systems, and rapid prototyping capabilities.",
-    salaryRange: "$120,000 - $150,000",
+    description: "Join our HR division to manage corporate talent strategy, employee relations, onboarding frameworks, and organizational health. You will partner with business unit heads to direct hiring strategies.",
+    salaryRange: "$95,000 - $120,000",
     status: "active",
   },
   {
-    id: "backend-eng",
-    title: "Backend Engineer (Node/Go)",
-    department: "Engineering",
-    location: "Remote (Global)",
-    type: "Contract",
+    id: "fin-analyst",
+    title: "Senior Financial Analyst",
+    department: "Finance",
+    location: "Chicago, IL (On-site)",
+    type: "Full-time",
+    experienceRequired: "5+ years",
+    description: "Seeking a Senior Analyst to direct financial modeling, budgeting, and monthly auditing reports. Experience with enterprise ERP systems and financial forecasting models is required.",
+    salaryRange: "$110,000 - $135,000",
+    status: "active",
+  },
+  {
+    id: "growth-mkt",
+    title: "Growth Marketing Manager",
+    department: "Marketing",
+    location: "Remote (US/Europe)",
+    type: "Full-time",
     experienceRequired: "3+ years",
-    description: "Help build scalable APIs, microservices, and databases. Strong experience with Node.js, Go, PostgreSQL, Redis, and cloud infrastructure (AWS/GCP) is required.",
-    salaryRange: "$80 - $110 / hour",
+    description: "Lead user acquisition and campaign management across PPC, social, and SEO channels. You will monitor metrics, run A/B testing, and collaborate with creative designers.",
+    salaryRange: "$90,000 - $115,000",
+    status: "active",
+  },
+  {
+    id: "ops-coord",
+    title: "Operations Coordinator",
+    department: "Operations",
+    location: "San Francisco, CA (On-site)",
+    type: "Full-time",
+    experienceRequired: "2+ years",
+    description: "Provide administrative, logistial, and office management support. You will manage scheduling, vendor relationships, facility maintenance, and assist on corporate operational tasks.",
+    salaryRange: "$60,000 - $75,000",
+    status: "active",
+  },
+  {
+    id: "sales-exec",
+    title: "Corporate Account Executive",
+    department: "Sales",
+    location: "Remote (Global)",
+    type: "Full-time",
+    experienceRequired: "3+ years",
+    description: "Manage client acquisitions, close B2B enterprise deals, and run software demonstrations. Must have strong verbal communication skills and a track record of meeting revenue targets.",
+    salaryRange: "$80,000 - $100,000 + OTE",
     status: "active",
   }
 ];
 
-const MOCK_APPLICANTS: Applicant[] = [
+const INITIAL_APPLICANTS: Applicant[] = [
   {
     id: "app-1",
     name: "Alexander Wright",
@@ -116,120 +139,290 @@ const MOCK_APPLICANTS: Applicant[] = [
     name: "Sarah Chen",
     email: "sarah.chen@uxdesign.net",
     phone: "+1 (555) 043-9876",
-    positionId: "ui-designer",
-    positionTitle: "Lead UI/UX Designer",
+    positionId: "hr-partner",
+    positionTitle: "HR Business Partner",
     experience: "5 years",
-    linkedin: "https://linkedin.com/in/sarah-chen-design",
-    portfolio: "https://sarahchen.design",
+    linkedin: "https://linkedin.com/in/sarah-chen-hr",
+    portfolio: "",
     resumeUrl: "https://sarahchen.design/resume_2026.pdf",
-    coverLetter: "Design is not just what it looks like; it's how it works. My goal is to build premium, immersive design systems that wow users instantly.",
+    coverLetter: "I specialize in organizational design and corporate culture mapping. Excited about the prospect of streamlining your HR processes.",
     noticePeriod: "1 Month",
     status: "applied",
     notes: [],
     appliedAt: "2026-06-11T14:22:00Z"
-  },
-  {
-    id: "app-3",
-    name: "David Kovic",
-    email: "david.kovic@cloudbackend.org",
-    phone: "+385 91 234 5678",
-    positionId: "backend-eng",
-    positionTitle: "Backend Engineer (Node/Go)",
-    experience: "4 years",
-    linkedin: "https://linkedin.com/in/david-kovic",
-    portfolio: "https://github.com/dkovic-dev",
-    resumeUrl: "https://dkovic-dev.github.io/cv.pdf",
-    coverLetter: "I specialize in writing high-performance APIs and maintaining database structures. I love writing Go and building system integrations.",
-    noticePeriod: "2 Weeks",
-    status: "offered",
-    notes: [
-      {
-        id: "note-2",
-        text: "Technical interview cleared with outstanding score. Offered sent out today.",
-        createdAt: "2026-06-12T09:00:00Z"
-      }
-    ],
-    appliedAt: "2026-06-08T11:15:00Z"
   }
 ];
 
-function initDB() {
+// Helper to determine if Supabase is connected and ready
+function isSupabaseConfigured(): boolean {
+  return !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+}
+
+// Local File Fallback System
+function initLocalDB() {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
   if (!fs.existsSync(APPLICANTS_FILE)) {
-    fs.writeFileSync(APPLICANTS_FILE, JSON.stringify(MOCK_APPLICANTS, null, 2), "utf-8");
+    fs.writeFileSync(APPLICANTS_FILE, JSON.stringify(INITIAL_APPLICANTS, null, 2), "utf-8");
   }
 }
 
-export function getJobs(): JobPosition[] {
-  return MOCK_JOBS;
-}
-
-export function getJobById(id: string): JobPosition | undefined {
-  return MOCK_JOBS.find(j => j.id === id);
-}
-
-export function getApplicants(): Applicant[] {
-  initDB();
+function getLocalApplicants(): Applicant[] {
+  initLocalDB();
   try {
     const data = fs.readFileSync(APPLICANTS_FILE, "utf-8");
     return JSON.parse(data);
   } catch (err) {
-    console.error("Failed to read applicants DB:", err);
-    return MOCK_APPLICANTS;
+    return INITIAL_APPLICANTS;
   }
 }
 
-export function saveApplicants(applicants: Applicant[]) {
-  initDB();
+function saveLocalApplicants(applicants: Applicant[]) {
+  initLocalDB();
   try {
     fs.writeFileSync(APPLICANTS_FILE, JSON.stringify(applicants, null, 2), "utf-8");
   } catch (err) {
-    console.error("Failed to write applicants DB:", err);
+    console.error("Failed to write local DB:", err);
   }
 }
 
-export function addApplicant(newApplicant: Omit<Applicant, "id" | "status" | "notes" | "appliedAt" | "positionTitle">): Applicant {
-  const applicants = getApplicants();
+// Seeding logic to help initialize Supabase
+export async function seedSupabaseIfNeeded() {
+  if (!isSupabaseConfigured()) return;
+  try {
+    // Check if jobs are empty
+    const { count, error } = await supabase.from("jobs").select("*", { count: "exact", head: true });
+    if (error) throw error;
+
+    if (count === 0) {
+      console.log("Seeding Supabase jobs table...");
+      const dbJobs = CORPORATE_JOBS.map(job => ({
+        id: job.id,
+        title: job.title,
+        department: job.department,
+        location: job.location,
+        type: job.type,
+        experience_required: job.experienceRequired,
+        description: job.description,
+        salary_range: job.salaryRange || "",
+        status: job.status,
+      }));
+      await supabase.from("jobs").insert(dbJobs);
+
+      // Seed initial applicants & notes
+      console.log("Seeding Supabase applicants and notes table...");
+      for (const app of INITIAL_APPLICANTS) {
+        const dbApp = {
+          id: app.id,
+          name: app.name,
+          email: app.email,
+          phone: app.phone,
+          position_id: app.positionId,
+          position_title: app.positionTitle,
+          experience: app.experience,
+          linkedin: app.linkedin || "",
+          portfolio: app.portfolio || "",
+          resume_url: app.resumeUrl || "",
+          cover_letter: app.coverLetter,
+          notice_period: app.noticePeriod,
+          status: app.status,
+          applied_at: app.appliedAt
+        };
+        await supabase.from("applicants").insert(dbApp);
+
+        for (const note of app.notes) {
+          await supabase.from("notes").insert({
+            id: note.id,
+            applicant_id: app.id,
+            text: note.text,
+            created_at: note.createdAt
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Failed to seed Supabase database:", err);
+  }
+}
+
+// --- Public Access Methods ---
+
+export function getJobs(): JobPosition[] {
+  // We keep corporate jobs defined locally as a static list for immediate render,
+  // but can read them from Supabase if needed. We return static list to prevent page loading lags.
+  return CORPORATE_JOBS;
+}
+
+export function getJobById(id: string): JobPosition | undefined {
+  return CORPORATE_JOBS.find(j => j.id === id);
+}
+
+export async function getApplicants(): Promise<Applicant[]> {
+  if (!isSupabaseConfigured()) {
+    return getLocalApplicants();
+  }
+
+  try {
+    // Fetch applicants
+    const { data: dbApplicants, error: appError } = await supabase
+      .from("applicants")
+      .select("*")
+      .order("applied_at", { ascending: false });
+
+    if (appError) throw appError;
+
+    // Fetch notes
+    const { data: dbNotes, error: notesError } = await supabase
+      .from("notes")
+      .select("*")
+      .order("created_at", { ascending: true });
+
+    if (notesError) throw notesError;
+
+    // Map database structures back to frontend Typescript interfaces
+    return (dbApplicants || []).map(app => {
+      const notesForApp = (dbNotes || [])
+        .filter(note => note.applicant_id === app.id)
+        .map(note => ({
+          id: note.id,
+          text: note.text,
+          createdAt: note.created_at
+        }));
+
+      return {
+        id: app.id,
+        name: app.name,
+        email: app.email,
+        phone: app.phone,
+        positionId: app.position_id,
+        positionTitle: app.position_title,
+        experience: app.experience,
+        linkedin: app.linkedin,
+        portfolio: app.portfolio,
+        resumeUrl: app.resume_url,
+        coverLetter: app.cover_letter,
+        noticePeriod: app.notice_period,
+        status: app.status,
+        notes: notesForApp,
+        appliedAt: app.applied_at
+      };
+    });
+  } catch (err) {
+    console.error("Supabase error fetching applicants, falling back to local file:", err);
+    return getLocalApplicants();
+  }
+}
+
+export async function addApplicant(newApplicant: Omit<Applicant, "id" | "status" | "notes" | "appliedAt" | "positionTitle">): Promise<Applicant> {
   const position = getJobById(newApplicant.positionId);
+  const positionTitle = position ? position.title : "General Position";
+  const id = `app-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  const appliedAt = new Date().toISOString();
+
   const applicant: Applicant = {
     ...newApplicant,
-    id: `app-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-    positionTitle: position ? position.title : "General Position",
+    id,
+    positionTitle,
     status: "applied",
     notes: [],
-    appliedAt: new Date().toISOString(),
+    appliedAt,
   };
 
-  applicants.unshift(applicant); // Add to the top of the list
-  saveApplicants(applicants);
-  return applicant;
+  if (!isSupabaseConfigured()) {
+    const applicants = getLocalApplicants();
+    applicants.unshift(applicant);
+    saveLocalApplicants(applicants);
+    return applicant;
+  }
+
+  try {
+    const { error } = await supabase.from("applicants").insert({
+      id,
+      name: newApplicant.name,
+      email: newApplicant.email,
+      phone: newApplicant.phone,
+      position_id: newApplicant.positionId,
+      position_title: positionTitle,
+      experience: newApplicant.experience,
+      linkedin: newApplicant.linkedin || "",
+      portfolio: newApplicant.portfolio || "",
+      resume_url: newApplicant.resumeUrl || "",
+      cover_letter: newApplicant.coverLetter,
+      notice_period: newApplicant.noticePeriod,
+      status: "applied",
+      applied_at: appliedAt
+    });
+
+    if (error) throw error;
+    return applicant;
+  } catch (err) {
+    console.error("Failed to insert into Supabase, saving locally:", err);
+    const applicants = getLocalApplicants();
+    applicants.unshift(applicant);
+    saveLocalApplicants(applicants);
+    return applicant;
+  }
 }
 
-export function updateApplicantStatus(id: string, status: Applicant["status"]): boolean {
-  const applicants = getApplicants();
-  const index = applicants.findIndex(a => a.id === id);
-  if (index !== -1) {
-    applicants[index].status = status;
-    saveApplicants(applicants);
+export async function updateApplicantStatus(id: string, status: Applicant["status"]): Promise<boolean> {
+  if (!isSupabaseConfigured()) {
+    const applicants = getLocalApplicants();
+    const index = applicants.findIndex(a => a.id === id);
+    if (index !== -1) {
+      applicants[index].status = status;
+      saveLocalApplicants(applicants);
+      return true;
+    }
+    return false;
+  }
+
+  try {
+    const { error } = await supabase
+      .from("applicants")
+      .update({ status })
+      .eq("id", id);
+
+    if (error) throw error;
     return true;
+  } catch (err) {
+    console.error("Failed to update status on Supabase:", err);
+    return false;
   }
-  return false;
 }
 
-export function addApplicantNote(id: string, noteText: string): RecruiterNote | null {
-  const applicants = getApplicants();
-  const index = applicants.findIndex(a => a.id === id);
-  if (index !== -1) {
-    const newNote: RecruiterNote = {
-      id: `note-${Date.now()}`,
-      text: noteText,
-      createdAt: new Date().toISOString()
-    };
-    applicants[index].notes.push(newNote);
-    saveApplicants(applicants);
-    return newNote;
+export async function addApplicantNote(id: string, noteText: string): Promise<RecruiterNote | null> {
+  const noteId = `note-${Date.now()}`;
+  const createdAt = new Date().toISOString();
+  const newNote: RecruiterNote = {
+    id: noteId,
+    text: noteText,
+    createdAt
+  };
+
+  if (!isSupabaseConfigured()) {
+    const applicants = getLocalApplicants();
+    const index = applicants.findIndex(a => a.id === id);
+    if (index !== -1) {
+      applicants[index].notes.push(newNote);
+      saveLocalApplicants(applicants);
+      return newNote;
+    }
+    return null;
   }
-  return null;
+
+  try {
+    const { error } = await supabase.from("notes").insert({
+      id: noteId,
+      applicant_id: id,
+      text: noteText,
+      created_at: createdAt
+    });
+
+    if (error) throw error;
+    return newNote;
+  } catch (err) {
+    console.error("Failed to add note to Supabase:", err);
+    return null;
+  }
 }
