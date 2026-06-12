@@ -1,0 +1,65 @@
+[
+  {
+    "id": "app-1",
+    "name": "Alexander Wright",
+    "email": "alexander.wright@devmail.io",
+    "phone": "+1 (555) 019-2834",
+    "positionId": "sr-frontend",
+    "positionTitle": "Senior Frontend Engineer",
+    "experience": "6 years",
+    "linkedin": "https://linkedin.com/in/alexander-wright-dev",
+    "portfolio": "https://wright-codes.dev",
+    "resumeUrl": "https://wright-codes.dev/resume.pdf",
+    "coverLetter": "I'm highly excited about NextHire! I have built premium design systems and highly interactive user dashboards in my previous roles. I'd love to bring my React and CSS skills to the team.",
+    "noticePeriod": "Immediate",
+    "status": "interviewing",
+    "notes": [
+      {
+        "id": "note-1",
+        "text": "Strong portfolio with rich interactive components. Fits standard requirements perfectly.",
+        "createdAt": "2026-06-11T10:00:00Z"
+      }
+    ],
+    "appliedAt": "2026-06-10T08:30:00Z"
+  },
+  {
+    "id": "app-2",
+    "name": "Sarah Chen",
+    "email": "sarah.chen@uxdesign.net",
+    "phone": "+1 (555) 043-9876",
+    "positionId": "ui-designer",
+    "positionTitle": "Lead UI/UX Designer",
+    "experience": "5 years",
+    "linkedin": "https://linkedin.com/in/sarah-chen-design",
+    "portfolio": "https://sarahchen.design",
+    "resumeUrl": "https://sarahchen.design/resume_2026.pdf",
+    "coverLetter": "Design is not just what it looks like; it's how it works. My goal is to build premium, immersive design systems that wow users instantly.",
+    "noticePeriod": "1 Month",
+    "status": "applied",
+    "notes": [],
+    "appliedAt": "2026-06-11T14:22:00Z"
+  },
+  {
+    "id": "app-3",
+    "name": "David Kovic",
+    "email": "david.kovic@cloudbackend.org",
+    "phone": "+385 91 234 5678",
+    "positionId": "backend-eng",
+    "positionTitle": "Backend Engineer (Node/Go)",
+    "experience": "4 years",
+    "linkedin": "https://linkedin.com/in/david-kovic",
+    "portfolio": "https://github.com/dkovic-dev",
+    "resumeUrl": "https://dkovic-dev.github.io/cv.pdf",
+    "coverLetter": "I specialize in writing high-performance APIs and maintaining database structures. I love writing Go and building system integrations.",
+    "noticePeriod": "2 Weeks",
+    "status": "offered",
+    "notes": [
+      {
+        "id": "note-2",
+        "text": "Technical interview cleared with outstanding score. Offered sent out today.",
+        "createdAt": "2026-06-12T09:00:00Z"
+      }
+    ],
+    "appliedAt": "2026-06-08T11:15:00Z"
+  }
+]
