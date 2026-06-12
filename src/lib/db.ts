@@ -190,7 +190,7 @@ export function saveApplicants(applicants: Applicant[]) {
   }
 }
 
-export function addApplicant(newApplicant: Omit<Applicant, "id" | "status" | "notes" | "appliedAt">): Applicant {
+export function addApplicant(newApplicant: Omit<Applicant, "id" | "status" | "notes" | "appliedAt" | "positionTitle">): Applicant {
   const applicants = getApplicants();
   const position = getJobById(newApplicant.positionId);
   const applicant: Applicant = {

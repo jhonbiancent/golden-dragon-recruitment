@@ -138,7 +138,7 @@ export default function AdminDashboard() {
   };
 
   // Status mapping colors
-  const statusColors = {
+  const statusColors: Record<Applicant["status"], string> = {
     applied: "bg-blue-500/10 text-blue-400 border border-blue-500/20",
     interviewing: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
     offered: "bg-purple-500/10 text-purple-400 border border-purple-500/20",
