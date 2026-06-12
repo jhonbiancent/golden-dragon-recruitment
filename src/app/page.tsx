@@ -387,8 +387,9 @@ export default function Home() {
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-semibold text-slate-400 mb-1.5">Full Name *</label>
+                        <label htmlFor="name" className="block text-xs font-semibold text-slate-400 mb-1.5">Full Name *</label>
                         <input
+                          id="name"
                           type="text"
                           name="name"
                           required
@@ -400,8 +401,9 @@ export default function Home() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-slate-400 mb-1.5">Email Address *</label>
+                        <label htmlFor="email" className="block text-xs font-semibold text-slate-400 mb-1.5">Email Address *</label>
                         <input
+                          id="email"
                           type="email"
                           name="email"
                           required
@@ -413,8 +415,9 @@ export default function Home() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-slate-400 mb-1.5">Phone Number *</label>
+                        <label htmlFor="phone" className="block text-xs font-semibold text-slate-400 mb-1.5">Phone Number *</label>
                         <input
+                          id="phone"
                           type="tel"
                           name="phone"
                           required
@@ -426,8 +429,9 @@ export default function Home() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-slate-400 mb-1.5">Years of Relevant Experience *</label>
+                        <label htmlFor="experience" className="block text-xs font-semibold text-slate-400 mb-1.5">Years of Relevant Experience *</label>
                         <select
+                          id="experience"
                           name="experience"
                           value={formData.experience}
                           onChange={handleInputChange}
@@ -451,8 +455,9 @@ export default function Home() {
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-semibold text-slate-400 mb-1.5">LinkedIn Profile URL</label>
+                        <label htmlFor="linkedin" className="block text-xs font-semibold text-slate-400 mb-1.5">LinkedIn Profile URL</label>
                         <input
+                          id="linkedin"
                           type="url"
                           name="linkedin"
                           value={formData.linkedin}
@@ -463,8 +468,9 @@ export default function Home() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-slate-400 mb-1.5">Portfolio / Website URL</label>
+                        <label htmlFor="portfolio" className="block text-xs font-semibold text-slate-400 mb-1.5">Portfolio / Website URL</label>
                         <input
+                          id="portfolio"
                           type="url"
                           name="portfolio"
                           value={formData.portfolio}
@@ -476,8 +482,9 @@ export default function Home() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">Resume / CV Link *</label>
+                      <label htmlFor="resumeUrl" className="block text-xs font-semibold text-slate-400 mb-1.5">Resume / CV Link *</label>
                       <input
+                        id="resumeUrl"
                         type="url"
                         name="resumeUrl"
                         required
@@ -496,8 +503,9 @@ export default function Home() {
                     </h4>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">Notice Period *</label>
+                      <label htmlFor="noticePeriod" className="block text-xs font-semibold text-slate-400 mb-1.5">Notice Period *</label>
                       <select
+                        id="noticePeriod"
                         name="noticePeriod"
                         value={formData.noticePeriod}
                         onChange={handleInputChange}
@@ -512,8 +520,9 @@ export default function Home() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-1.5">Cover Letter / Statement of Interest *</label>
+                      <label htmlFor="coverLetter" className="block text-xs font-semibold text-slate-400 mb-1.5">Cover Letter / Statement of Interest *</label>
                       <textarea
+                        id="coverLetter"
                         name="coverLetter"
                         required
                         rows={4}

@@ -2,19 +2,19 @@
   {
     "name": "Jhon Biancent Recede",
     "email": "jhonbiancent06@gmail.com",
-    "phone": "+639469796509",
-    "positionId": "ui-designer",
-    "experience": "Less than 1 Year",
+    "phone": "09469796509",
+    "positionId": "product-mgr",
+    "experience": "1-3 Years",
     "linkedin": "https://www.linkedin.com/notifications/?filter=all",
     "portfolio": "https://www.linkedin.com/notifications/?filter=all",
     "resumeUrl": "https://www.linkedin.com/notifications/?filter=all",
     "coverLetter": "https://www.linkedin.com/notifications/?filter=all",
     "noticePeriod": "Immediate",
-    "id": "app-1781247085154-335",
+    "id": "app-1781249108355-674",
     "positionTitle": "General Position",
     "status": "applied",
     "notes": [],
-    "appliedAt": "2026-06-12T06:51:25.154Z"
+    "appliedAt": "2026-06-12T07:25:08.355Z"
   },
   {
     "name": "Jhon Biancent Recede",
@@ -22,16 +22,16 @@
     "phone": "+639469796509",
     "positionId": "ui-designer",
     "experience": "1-3 Years",
-    "linkedin": "",
-    "portfolio": "",
-    "resumeUrl": "https://www.linkedin.com/notifications/?filter=allhttps://www.linkedin.com/notifications/?filter=all",
+    "linkedin": "https://www.linkedin.com/notifications/?filter=all",
+    "portfolio": "https://www.linkedin.com/notifications/?filter=all",
+    "resumeUrl": "https://www.linkedin.com/notifications/?filter=all",
     "coverLetter": "https://www.linkedin.com/notifications/?filter=all",
-    "noticePeriod": "2 Weeks",
-    "id": "app-1781247010978-422",
+    "noticePeriod": "1 Month",
+    "id": "app-1781249048975-566",
     "positionTitle": "General Position",
     "status": "applied",
     "notes": [],
-    "appliedAt": "2026-06-12T06:50:10.978Z"
+    "appliedAt": "2026-06-12T07:24:08.975Z"
   },
   {
     "id": "app-1",
@@ -61,39 +61,16 @@
     "name": "Sarah Chen",
     "email": "sarah.chen@uxdesign.net",
     "phone": "+1 (555) 043-9876",
-    "positionId": "ui-designer",
-    "positionTitle": "Lead UI/UX Designer",
+    "positionId": "hr-partner",
+    "positionTitle": "HR Business Partner",
     "experience": "5 years",
-    "linkedin": "https://linkedin.com/in/sarah-chen-design",
-    "portfolio": "https://sarahchen.design",
+    "linkedin": "https://linkedin.com/in/sarah-chen-hr",
+    "portfolio": "",
     "resumeUrl": "https://sarahchen.design/resume_2026.pdf",
-    "coverLetter": "Design is not just what it looks like; it's how it works. My goal is to build premium, immersive design systems that wow users instantly.",
+    "coverLetter": "I specialize in organizational design and corporate culture mapping. Excited about the prospect of streamlining your HR processes.",
     "noticePeriod": "1 Month",
     "status": "applied",
     "notes": [],
     "appliedAt": "2026-06-11T14:22:00Z"
-  },
-  {
-    "id": "app-3",
-    "name": "David Kovic",
-    "email": "david.kovic@cloudbackend.org",
-    "phone": "+385 91 234 5678",
-    "positionId": "backend-eng",
-    "positionTitle": "Backend Engineer (Node/Go)",
-    "experience": "4 years",
-    "linkedin": "https://linkedin.com/in/david-kovic",
-    "portfolio": "https://github.com/dkovic-dev",
-    "resumeUrl": "https://dkovic-dev.github.io/cv.pdf",
-    "coverLetter": "I specialize in writing high-performance APIs and maintaining database structures. I love writing Go and building system integrations.",
-    "noticePeriod": "2 Weeks",
-    "status": "offered",
-    "notes": [
-      {
-        "id": "note-2",
-        "text": "Technical interview cleared with outstanding score. Offered sent out today.",
-        "createdAt": "2026-06-12T09:00:00Z"
-      }
-    ],
-    "appliedAt": "2026-06-08T11:15:00Z"
   }
 ]

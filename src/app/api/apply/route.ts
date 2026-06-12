@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { addApplicant } from "@/lib/db";
+import { addApplicant, seedSupabaseIfNeeded } from "@/lib/db";
 
 export async function POST(request: Request) {
   try {
+    await seedSupabaseIfNeeded();
     const body = await request.json();
     const { name, email, phone, positionId, experience, linkedin, portfolio, resumeUrl, coverLetter, noticePeriod } = body;
 
