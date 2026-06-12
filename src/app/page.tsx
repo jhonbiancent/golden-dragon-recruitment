@@ -526,18 +526,20 @@ export default function Home() {
                         />
                       </div>
 
-                      <div>
-                        <label htmlFor="portfolio" className="block text-xs font-semibold text-slate-400 mb-1.5">Portfolio / Website URL</label>
-                        <input
-                          id="portfolio"
-                          type="url"
-                          name="portfolio"
-                          value={formData.portfolio}
-                          onChange={handleInputChange}
-                          placeholder="https://myportfolio.com"
-                          className="w-full bg-slate-900/60 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
-                        />
-                      </div>
+                      {selectedJob.id !== "general" && (
+                        <div>
+                          <label htmlFor="portfolio" className="block text-xs font-semibold text-slate-400 mb-1.5">Portfolio / Website URL</label>
+                          <input
+                            id="portfolio"
+                            type="url"
+                            name="portfolio"
+                            value={formData.portfolio}
+                            onChange={handleInputChange}
+                            placeholder="https://myportfolio.com"
+                            className="w-full bg-slate-900/60 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
+                          />
+                        </div>
+                      )}
                     </div>
 
                     <div>
