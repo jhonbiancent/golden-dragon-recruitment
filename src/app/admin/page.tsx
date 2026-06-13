@@ -22,7 +22,8 @@ import {
   DollarSign,
   Trash2,
   Edit2,
-  AlertTriangle
+  AlertTriangle,
+  Download
 } from "lucide-react";
 
 interface RecruiterNote {
@@ -43,7 +44,8 @@ interface Applicant {
   portfolio?: string;
   resumeUrl?: string;
   coverLetter: string;
-  status: "applied" | "interviewing" | "offered" | "rejected" | "hired";
+  noticePeriod: string;
+  status: "applied" | "interviewing" | "rejected" | "hired";
   notes: RecruiterNote[];
   appliedAt: string;
 }
@@ -66,6 +68,7 @@ export default function AdminDashboard() {
   const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [positionFilter, setPositionFilter] = useState("all");
   const [noteText, setNoteText] = useState("");
   const [savingNote, setSavingNote] = useState(false);
   const [savingStatus, setSavingStatus] = useState(false);
@@ -76,7 +79,10 @@ export default function AdminDashboard() {
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 30;
+  const ITEMS_PER_PAGE = 50;
+
+  // Sorting State
+  const [sortConfig, setSortConfig] = useState<{ field: 'name' | 'positionTitle' | 'appliedAt', direction: 'asc' | 'desc' }>({ field: 'appliedAt', direction: 'desc' });
 
   const [jobFormData, setJobFormData] = useState({
     title: "",
@@ -258,17 +264,35 @@ export default function AdminDashboard() {
     }
   };
 
+  const downloadCSV = () => {
+    const headers = ["Name", "Email", "Phone", "Position", "Pass Type", "Status", "Applied At"];
+    const rows = applicants.map(app => [
+        `"${app.name}"`,
+        `"${app.email}"`,
+        `"${app.phone}"`,
+        `"${app.positionTitle}"`,
+        `"${app.passType}"`,
+        `"${app.status}"`,
+        `"${app.appliedAt}"`
+    ]);
+    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `applicants_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+  };
+
   const statusColors: Record<Applicant["status"], string> = {
     applied: "bg-blue-500/10 text-blue-400 border border-blue-500/20",
     interviewing: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
-    offered: "bg-gold-500/10 text-gold-400 border border-gold-500/20",
     rejected: "bg-rose-500/10 text-rose-400 border border-rose-500/20",
     hired: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
   };
 
   const totalCount = applicants.length;
   const interviewingCount = applicants.filter(a => a.status === "interviewing").length;
-  const offeredCount = applicants.filter(a => a.status === "offered").length;
   const hiredCount = applicants.filter(a => a.status === "hired").length;
 
   const filteredApplicants = applicants.filter(app => {
@@ -276,14 +300,38 @@ export default function AdminDashboard() {
                           app.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           app.positionTitle.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || app.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesPosition = positionFilter === "all" || app.positionId === positionFilter;
+    return matchesSearch && matchesStatus && matchesPosition;
   });
 
-  const totalPages = Math.ceil((activeTab === 'applicants' ? filteredApplicants.length : jobs.length) / ITEMS_PER_PAGE);
+  const sortedApplicants = [...filteredApplicants].sort((a, b) => {
+    let aValue: any = a[sortConfig.field];
+    let bValue: any = b[sortConfig.field];
+
+    if (sortConfig.field === 'appliedAt') {
+      return sortConfig.direction === 'asc' 
+        ? new Date(aValue).getTime() - new Date(bValue).getTime()
+        : new Date(bValue).getTime() - new Date(aValue).getTime();
+    }
+    
+    if (sortConfig.field === 'positionTitle') {
+        aValue = a.positionTitle.toLowerCase();
+        bValue = b.positionTitle.toLowerCase();
+    } else {
+        aValue = String(aValue).toLowerCase();
+        bValue = String(bValue).toLowerCase();
+    }
+
+    if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const totalPages = Math.ceil((activeTab === 'applicants' ? sortedApplicants.length : jobs.length) / ITEMS_PER_PAGE);
   const indexOfLast = currentPage * ITEMS_PER_PAGE;
   const indexOfFirst = indexOfLast - ITEMS_PER_PAGE;
   const currentItems = activeTab === 'applicants' 
-    ? filteredApplicants.slice(indexOfFirst, indexOfLast)
+    ? sortedApplicants.slice(indexOfFirst, indexOfLast)
     : jobs.slice(indexOfFirst, indexOfLast);
 
   return (
@@ -330,9 +378,9 @@ export default function AdminDashboard() {
 
         {activeTab === 'applicants' && (
           <>
-            {/* Stats Grid */}
-            <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              <div className="glass-card rounded-2xl p-5 flex items-center space-x-4">
+            {/* Stats Grid - Now responsive row */}
+            <section className="flex flex-row flex-wrap gap-5">
+              <div className="glass-card rounded-2xl p-5 flex items-center space-x-4 flex-1 min-w-50">
                 <div className="h-12 w-12 rounded-xl bg-gold-500/10 border border-gold-500/25 flex items-center justify-center text-gold-400">
                   <Users className="h-6 w-6" />
                 </div>
@@ -341,7 +389,7 @@ export default function AdminDashboard() {
                   <span className="text-2xl font-extrabold text-white mt-0.5">{totalCount}</span>
                 </div>
               </div>
-              <div className="glass-card rounded-2xl p-5 flex items-center space-x-4">
+              <div className="glass-card rounded-2xl p-5 flex items-center space-x-4 flex-1 min-w-50">
                 <div className="h-12 w-12 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-400">
                   <TrendingUp className="h-6 w-6" />
                 </div>
@@ -350,16 +398,8 @@ export default function AdminDashboard() {
                   <span className="text-2xl font-extrabold text-white mt-0.5">{interviewingCount}</span>
                 </div>
               </div>
-              <div className="glass-card rounded-2xl p-5 flex items-center space-x-4">
-                <div className="h-12 w-12 rounded-xl bg-gold-500/10 border border-gold-500/25 flex items-center justify-center text-gold-400">
-                  <UserCheck className="h-6 w-6" />
-                </div>
-                <div>
-                  <span className="text-xs font-medium text-slate-500 block">Offered Status</span>
-                  <span className="text-2xl font-extrabold text-white mt-0.5">{offeredCount}</span>
-                </div>
-              </div>
-              <div className="glass-card rounded-2xl p-5 flex items-center space-x-4">
+              
+              <div className="glass-card rounded-2xl p-5 flex items-center space-x-4 flex-1 min-w-50">
                 <div className="h-12 w-12 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-400">
                   <UserCheck className="h-6 w-6" />
                 </div>
@@ -370,7 +410,7 @@ export default function AdminDashboard() {
               </div>
             </section>
 
-            {/* Filter */}
+            {/* Filter and Export */}
             <section className="glass-card rounded-2xl p-6 shadow-xl">
               <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
                 <div className="relative w-full md:max-w-md flex-1">
@@ -385,19 +425,55 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="flex items-center space-x-1.5 overflow-x-auto w-full md:w-auto p-2 bg-slate-950/80 border border-slate-800/80 rounded-xl">
-                  {["all", "applied", "interviewing", "offered", "hired", "rejected"].map(status => (
-                    <button
-                      key={status}
-                      onClick={() => setStatusFilter(status)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
-                        statusFilter === status 
-                          ? "bg-gold-600 text-white shadow-sm" 
-                          : "text-slate-400 hover:text-slate-200"
-                      }`}
-                    >
-                      {status}
-                    </button>
-                  ))}
+                  {/* Position Filter */}
+                  <select
+                    value={positionFilter}
+                    onChange={(e) => setPositionFilter(e.target.value)}
+                    className="bg-slate-900 border border-slate-700 text-xs px-2 py-1.5 rounded-lg text-slate-400"
+                  >
+                    <option value="all">All Positions</option>
+                    {jobs.map(job => (
+                        <option key={job.id} value={job.id}>{job.title}</option>
+                    ))}
+                  </select>
+
+                  {/* Status Filter */}
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="bg-slate-900 border border-slate-700 text-xs px-2 py-1.5 rounded-lg text-slate-400 capitalize"
+                  >
+                    <option value="all">All Statuses</option>
+                    <option value="applied">Applied</option>
+                    <option value="interviewing">Interviewing</option>
+                    <option value="hired">Hired</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+
+                  {/* Sorting Controls */}
+                  <select 
+                    onChange={(e) => {
+                        const [field, direction] = e.target.value.split('-');
+                        setSortConfig({ field: field as any, direction: direction as any });
+                    }}
+                    value={`${sortConfig.field}-${sortConfig.direction}`}
+                    className="bg-slate-900 border border-slate-700 text-xs px-2 py-1.5 rounded-lg text-slate-400"
+                  >
+                    <option value="appliedAt-desc">Date (Newest)</option>
+                    <option value="appliedAt-asc">Date (Oldest)</option>
+                    <option value="name-asc">Name (A-Z)</option>
+                    <option value="name-desc">Name (Z-A)</option>
+                    <option value="positionTitle-asc">Position (A-Z)</option>
+                    <option value="positionTitle-desc">Position (Z-A)</option>
+                  </select>
+
+                  <button 
+                    onClick={downloadCSV}
+                    className="px-3 py-1.5 rounded-lg bg-emerald-400 hover:bg-emerald-700 hover:cursor-pointer text-white text-xs font-semibold flex items-center space-x-1"
+                  >
+                    <Download className="h-3 w-3" />
+                    <span>Export</span>
+                  </button>
                 </div>
               </div>
 
@@ -405,11 +481,12 @@ export default function AdminDashboard() {
               <div className="overflow-x-auto rounded-xl border border-slate-800/80 bg-slate-950/20">
                 {loading ? (
                   <div className="text-center py-12 text-slate-500">Loading applicant records...</div>
-                ) : filteredApplicants.length > 0 ? (
+                ) : sortedApplicants.length > 0 ? (
                   <>
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="border-b border-slate-800 bg-slate-900/40 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                          <th className="py-4 px-6">NO.</th>
                           <th className="py-4 px-6">Applicant Name</th>
                           <th className="py-4 px-6">Position</th>
                           <th className="py-4 px-6">Applied Date</th>
@@ -419,12 +496,13 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-800/60 text-sm">
-                        {currentItems.map((app: any) => (
+                        {currentItems.map((app: any, index: number) => (
                           <tr 
                             key={app.id} 
                             className="hover:bg-slate-900/35 transition-colors cursor-pointer group"
                             onClick={() => setSelectedApplicant(app)}
                           >
+                            <td className="py-4.5 px-6 text-slate-500">{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
                             <td className="py-4.5 px-6">
                               <div className="font-semibold text-slate-100 group-hover:text-gold-400 transition-colors">
                                 {app.name}
@@ -636,7 +714,6 @@ export default function AdminDashboard() {
                   >
                     <option value="applied">Applied</option>
                     <option value="interviewing">Interviewing</option>
-                    <option value="offered">Offered</option>
                     <option value="hired">Hired</option>
                     <option value="rejected">Rejected</option>
                   </select>
@@ -665,7 +742,10 @@ export default function AdminDashboard() {
                     <span className="text-slate-500 text-xs font-bold shrink-0 uppercase w-4.5">PSS</span>
                     <span>Pass Type: {selectedApplicant.passType}</span>
                   </div>
-               
+                  <div className="flex items-center space-x-3 text-sm text-slate-300">
+                    <span className="text-slate-500 text-xs font-bold shrink-0 uppercase w-4.5">Ntc</span>
+                    <span>Notice Period: {selectedApplicant.noticePeriod}</span>
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-2 pt-2">
                   {selectedApplicant.linkedin && (

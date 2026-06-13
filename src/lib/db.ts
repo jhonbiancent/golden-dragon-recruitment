@@ -19,7 +19,7 @@ export interface Applicant {
   availability: string;
   passType: string;
   resumeUrl: string;
-  status: "applied" | "interviewing" | "offered" | "rejected" | "hired";
+  status: "applied" | "interviewing" | "rejected" | "hired";
   notes: RecruiterNote[];
   appliedAt: string;
 }
