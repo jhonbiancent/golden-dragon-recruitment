@@ -14,7 +14,11 @@ import {
   Phone,
   Briefcase,
   ChevronRight,
-  ClipboardList
+  ClipboardList,
+  Layers,
+  MapPin,
+  Clock,
+  DollarSign
 } from "lucide-react";
 
 interface RecruiterNote {
@@ -50,8 +54,88 @@ export default function AdminDashboard() {
   const [noteText, setNoteText] = useState("");
   const [savingNote, setSavingNote] = useState(false);
   const [savingStatus, setSavingStatus] = useState(false);
+  const [isJobModalOpen, setIsJobModalOpen] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [jobFormData, setJobFormData] = useState({
+    title: "",
+    department: "",
+    location: "",
+    description: "",
+    salaryRange: "",
+  });
 
-  // Fetch applicants from API
+  const handleJobSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch("/api/jobs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(jobFormData),
+      });
+
+      if (response.ok) {
+        setIsJobModalOpen(false);
+        setShowSuccessModal(true);
+        setJobFormData({
+          title: "",
+          department: "",
+          location: "",
+          description: "",
+          salaryRange: "",
+        });
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to create job: ${errorData.error}`);
+      }
+    } catch (error) {
+      console.error("Error creating job:", error);
+    }
+  };
+
+  // ... (inside AdminDashboard component return, before header or within a section)
+        {/* Job Creation Section */}
+        <section className="flex justify-end">
+          <button 
+            onClick={() => setIsJobModalOpen(true)}
+            className="px-4 py-2.5 rounded-xl bg-gold-600 hover:bg-gold-500 text-white font-semibold text-sm transition-all flex items-center space-x-2"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Create New Job</span>
+          </button>
+        </section>
+
+        {isJobModalOpen && (
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="glass-card w-full max-w-lg rounded-2xl p-6 border border-slate-800 max-h-screen overflow-y-auto">
+              <h3 className="text-lg font-bold text-white mb-4">Create New Job</h3>
+              <form onSubmit={handleJobSubmit} className="space-y-4">
+                <div className="relative">
+                  <Briefcase className="absolute left-3 top-3.5 h-4 w-4 text-slate-500" />
+                  <input type="text" placeholder="Job Title" required value={jobFormData.title} onChange={(e) => setJobFormData({...jobFormData, title: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-200" />
+                </div>
+                <div className="relative">
+                  <Layers className="absolute left-3 top-3.5 h-4 w-4 text-slate-500" />
+                  <input type="text" placeholder="Department" required value={jobFormData.department} onChange={(e) => setJobFormData({...jobFormData, department: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-200" />
+                </div>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-3.5 h-4 w-4 text-slate-500" />
+                  <input type="text" placeholder="Location" required value={jobFormData.location} onChange={(e) => setJobFormData({...jobFormData, location: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-200" />
+                </div>
+                <textarea placeholder="Description" required value={jobFormData.description} onChange={(e) => setJobFormData({...jobFormData, description: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 resize-none" rows={3} />
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-3.5 h-4 w-4 text-slate-500" />
+                  <input type="text" placeholder="Salary Range (Optional)" value={jobFormData.salaryRange} onChange={(e) => setJobFormData({...jobFormData, salaryRange: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-200" />
+                </div>
+                
+                <div className="flex justify-end gap-3 pt-2">
+                  <button type="button" onClick={() => setIsJobModalOpen(false)} className="px-4 py-2 rounded-xl text-slate-400 hover:text-slate-200 text-sm">Cancel</button>
+                  <button type="submit" className="px-4 py-2 rounded-xl bg-gold-600 hover:bg-gold-500 text-white text-sm font-semibold">Create Job</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
   const fetchApplicants = async () => {
     try {
       const response = await fetch("/api/applicants");
@@ -186,6 +270,62 @@ export default function AdminDashboard() {
 
       {/* Main Body */}
       <main className="grow max-w-7xl w-full mx-auto px-6 py-10 space-y-8">
+        
+        {/* Job Creation Section */}
+        <section className="flex justify-end">
+          <button 
+            onClick={() => setIsJobModalOpen(true)}
+            className="px-4 py-2.5 rounded-xl bg-gold-600 hover:bg-gold-500 text-white font-semibold text-sm transition-all flex items-center space-x-2"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Create New Job</span>
+          </button>
+        </section>
+
+        {isJobModalOpen && (
+          <div className="fixed inset-0 z-50  bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="glass-card w-full max-w-lg rounded-2xl p-6 border border-slate-800 ">
+              <h3 className="text-lg font-bold text-white mb-4">Create New Job</h3>
+              <form onSubmit={handleJobSubmit} className="space-y-4">
+                <div className="relative">
+                  <Briefcase className="absolute left-3 top-3.5 h-4 w-4 text-slate-500" />
+                  <input type="text" placeholder="Job Title" required value={jobFormData.title} onChange={(e) => setJobFormData({...jobFormData, title: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-200" />
+                </div>
+                <div className="relative">
+                  <Layers className="absolute left-3 top-3.5 h-4 w-4 text-slate-500" />
+                  <input type="text" placeholder="Department" required value={jobFormData.department} onChange={(e) => setJobFormData({...jobFormData, department: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-200" />
+                </div>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-3.5 h-4 w-4 text-slate-500" />
+                  <input type="text" placeholder="Location" required value={jobFormData.location} onChange={(e) => setJobFormData({...jobFormData, location: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-200" />
+                </div>
+                <textarea placeholder="Description" required value={jobFormData.description} onChange={(e) => setJobFormData({...jobFormData, description: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 resize-none" rows={3} />
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-3.5 h-4 w-4 text-slate-500" />
+                  <input type="text" placeholder="Salary Range (Optional)" value={jobFormData.salaryRange} onChange={(e) => setJobFormData({...jobFormData, salaryRange: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-200" />
+                </div>
+                
+                <div className="flex justify-end gap-3 pt-2">
+                  <button type="button" onClick={() => setIsJobModalOpen(false)} className="px-4 py-2 rounded-xl text-slate-400 hover:text-slate-200 text-sm">Cancel</button>
+                  <button type="submit" className="px-4 py-2 rounded-xl bg-gold-600 hover:bg-gold-500 text-white text-sm font-semibold">Create Job</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {showSuccessModal && (
+          <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="glass-card w-full max-w-sm rounded-2xl p-6 border border-slate-800 text-center">
+              <div className="mx-auto h-12 w-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4">
+                <UserCheck className="h-6 w-6 text-emerald-400" />
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2">Job Created</h3>
+              <p className="text-sm text-slate-400 mb-6">The new job position has been added successfully.</p>
+              <button onClick={() => setShowSuccessModal(false)} className="w-full px-4 py-2.5 rounded-xl bg-gold-600 hover:bg-gold-500 text-white text-sm font-semibold">Close</button>
+            </div>
+          </div>
+        )}
         
         {/* Stats Grid */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">

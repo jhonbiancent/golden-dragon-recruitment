@@ -29,8 +29,6 @@ export interface JobPosition {
   title: string;
   department: string;
   location: string;
-  type: string;
-  experienceRequired: string;
   description: string;
   salaryRange?: string;
   status: "active" | "closed";
@@ -45,8 +43,6 @@ const CORPORATE_JOBS: JobPosition[] = [
     title: "Senior Frontend Engineer",
     department: "Technical",
     location: "Singapore",
-    type: "Full-time",
-    experienceRequired: "5+ years",
     description: "We are looking for a Senior Frontend Engineer to build beautiful, responsive web applications using React, Next.js, and modern CSS/Tailwind. You will design, develop, and lead frontend architecture.",
     status: "active",
   },
@@ -55,8 +51,6 @@ const CORPORATE_JOBS: JobPosition[] = [
     title: "HR Business Partner",
     department: "Administrative",
     location: "Singapore",
-    type: "Full-time",
-    experienceRequired: "4+ years",
     description: "Join our HR division to manage corporate talent strategy, employee relations, onboarding frameworks, and organizational health. You will partner with business unit heads to direct hiring strategies.",
     status: "active",
   },
@@ -65,8 +59,6 @@ const CORPORATE_JOBS: JobPosition[] = [
     title: "Senior Financial Analyst",
     department: "Administrative",
     location: "Singapore",
-    type: "Full-time",
-    experienceRequired: "5+ years",
     description: "Seeking a Senior Analyst to direct financial modeling, budgeting, and monthly auditing reports. Experience with enterprise ERP systems and financial forecasting models is required.",
     status: "active",
   },
@@ -75,8 +67,6 @@ const CORPORATE_JOBS: JobPosition[] = [
     title: "Growth Marketing Manager",
     department: "Sales",
     location: "Singapore",
-    type: "Full-time",
-    experienceRequired: "3+ years",
     description: "Lead user acquisition and campaign management across PPC, social, and SEO channels. You will monitor metrics, run A/B testing, and collaborate with creative designers.",
     status: "active",
   },
@@ -85,8 +75,6 @@ const CORPORATE_JOBS: JobPosition[] = [
     title: "Operations Coordinator",
     department: "General Operations",
     location: "Singapore",
-    type: "Full-time",
-    experienceRequired: "2+ years",
     description: "Provide administrative, logistial, and office management support. You will manage scheduling, vendor relationships, facility maintenance, and assist on corporate operational tasks.",
     status: "active",
   },
@@ -95,8 +83,6 @@ const CORPORATE_JOBS: JobPosition[] = [
     title: "Corporate Account Executive",
     department: "Sales",
     location: "Singapore",
-    type: "Full-time",
-    experienceRequired: "3+ years",
     description: "Manage client acquisitions, close B2B enterprise deals, and run software demonstrations. Must have strong verbal communication skills and a track record of meeting revenue targets.",
     status: "active",
   },
@@ -105,8 +91,6 @@ const CORPORATE_JOBS: JobPosition[] = [
     title: "Cleaning Specialist",
     department: "General Operations",
     location: "Singapore",
-    type: "Full-time",
-    experienceRequired: "1+ years",
     description: "Maintain cleanliness of our facilities, ensuring a safe and hygienic environment for all staff and visitors.",
     status: "active",
   },
@@ -115,8 +99,6 @@ const CORPORATE_JOBS: JobPosition[] = [
     title: "Driver / Chauffeur",
     department: "General Operations",
     location: "Singapore",
-    type: "Full-time",
-    experienceRequired: "2+ years",
     description: "Provide safe and timely transportation for staff and guests. Maintaining vehicles and following traffic safety regulations is required.",
     status: "active",
   },
@@ -125,8 +107,6 @@ const CORPORATE_JOBS: JobPosition[] = [
     title: "Food Service Worker",
     department: "General Operations",
     location: "Singapore",
-    type: "Full-time",
-    experienceRequired: "1+ years",
     description: "Prepare and serve high-quality food and beverages in our office cafeterias, ensuring hygiene standards are met.",
     status: "active",
   },
@@ -135,8 +115,6 @@ const CORPORATE_JOBS: JobPosition[] = [
     title: "Production Operator",
     department: "General Operations",
     location: "Singapore",
-    type: "Full-time",
-    experienceRequired: "1+ years",
     description: "Operate production machinery, monitor quality control, and ensure efficient workflow on the production line.",
     status: "active",
   },
@@ -145,8 +123,6 @@ const CORPORATE_JOBS: JobPosition[] = [
     title: "Wellness Coordinator",
     department: "General Operations",
     location: "Singapore",
-    type: "Full-time",
-    experienceRequired: "2+ years",
     description: "Promote employee health and well-being through programs, workshops, and wellness initiatives.",
     status: "active",
   },
@@ -155,16 +131,41 @@ const CORPORATE_JOBS: JobPosition[] = [
     title: "Security Guard",
     department: "General Operations",
     location: "Singapore",
-    type: "Full-time",
-    experienceRequired: "1+ years",
     description: "Monitor and patrol facility, ensuring safety of personnel, assets, and premises.",
     status: "active",
   }
 ];
 
-// Seeding Removed
+export async function addJob(newJob: Omit<JobPosition, "id" | "status">): Promise<JobPosition | null> {
+  const id = newJob.title.toLowerCase().replace(/\s+/g, '-');
+  
+  if (!isSupabaseConfigured()) {
+    return null;
+  }
 
-// Helper to determine if Supabase is connected and ready
+  try {
+    const { data, error } = await supabase
+      .from("jobs")
+      .insert({
+        id,
+        title: newJob.title,
+        department: newJob.department,
+        location: newJob.location,
+        description: newJob.description,
+        salary_range: newJob.salaryRange || null,
+        status: "active"
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    console.error("Failed to insert job into Supabase:", err);
+    return null;
+  }
+}
+
 function isSupabaseConfigured(): boolean {
   return !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 }

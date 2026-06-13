@@ -20,7 +20,6 @@ interface JobPosition {
   title: string;
   department: string;
   location: string;
-  type: string;
   experienceRequired: string;
   description: string;
   salaryRange?: string;
@@ -61,7 +60,6 @@ export default function Home() {
         title: "HR Business Partner",
         department: "Administrative",
         location: "Singapore",
-        type: "Full-time",
         experienceRequired: "4+ years",
         description: "Join our HR division to manage corporate talent strategy, employee relations, onboarding frameworks, and organizational health. You will partner with business unit heads to direct hiring strategies.",
         status: "active",
@@ -71,7 +69,6 @@ export default function Home() {
         title: "Senior Financial Analyst",
         department: "Administrative",
         location: "Singapore",
-        type: "Full-time",
         experienceRequired: "5+ years",
         description: "Seeking a Senior Analyst to direct financial modeling, budgeting, and monthly auditing reports. Experience with enterprise ERP systems and financial forecasting models is required.",
         status: "active",
@@ -81,7 +78,6 @@ export default function Home() {
         title: "Growth Marketing Manager",
         department: "Sales",
         location: "Singapore",
-        type: "Full-time",
         experienceRequired: "3+ years",
         description: "Lead user acquisition and campaign management across PPC, social, and SEO channels. You will monitor metrics, run A/B testing, and collaborate with creative designers.",
         status: "active",
@@ -91,7 +87,6 @@ export default function Home() {
         title: "Operations Coordinator",
         department: "General Operations",
         location: "Singapore",
-        type: "Full-time",
         experienceRequired: "2+ years",
         description: "Provide administrative, logistial, and office management support. You will manage scheduling, vendor relationships, facility maintenance, and assist on corporate operational tasks.",
         status: "active",
@@ -101,7 +96,6 @@ export default function Home() {
         title: "Corporate Account Executive",
         department: "Sales",
         location: "Singapore",
-        type: "Full-time",
         experienceRequired: "3+ years",
         description: "Manage client acquisitions, close B2B enterprise deals, and run software demonstrations. Must have strong verbal communication skills and a track record of meeting revenue targets.",
         status: "active",
@@ -111,7 +105,6 @@ export default function Home() {
         title: "Cleaning Specialist",
         department: "General Operations",
         location: "Singapore",
-        type: "Full-time",
         experienceRequired: "1+ years",
         description: "Maintain cleanliness of our facilities, ensuring a safe and hygienic environment for all staff and visitors.",
         status: "active",
@@ -121,7 +114,6 @@ export default function Home() {
         title: "Driver / Chauffeur",
         department: "General Operations",
         location: "Singapore",
-        type: "Full-time",
         experienceRequired: "2+ years",
         description: "Provide safe and timely transportation for staff and guests. Maintaining vehicles and following traffic safety regulations is required.",
         status: "active",
@@ -131,7 +123,6 @@ export default function Home() {
         title: "Food Service Worker",
         department: "General Operations",
         location: "Singapore",
-        type: "Full-time",
         experienceRequired: "1+ years",
         description: "Prepare and serve high-quality food and beverages in our office cafeterias, ensuring hygiene standards are met.",
         status: "active",
@@ -141,7 +132,6 @@ export default function Home() {
         title: "Production Operator",
         department: "General Operations",
         location: "Singapore",
-        type: "Full-time",
         experienceRequired: "1+ years",
         description: "Operate production machinery, monitor quality control, and ensure efficient workflow on the production line.",
         status: "active",
@@ -151,7 +141,6 @@ export default function Home() {
         title: "Wellness Coordinator",
         department: "General Operations",
         location: "Singapore",
-        type: "Full-time",
         experienceRequired: "2+ years",
         description: "Promote employee health and well-being through programs, workshops, and wellness initiatives.",
         status: "active",
@@ -161,7 +150,6 @@ export default function Home() {
         title: "Security Guard",
         department: "General Operations",
         location: "Singapore",
-        type: "Full-time",
         experienceRequired: "1+ years",
         description: "Monitor and patrol facility, ensuring safety of personnel, assets, and premises.",
         status: "active",
@@ -193,7 +181,6 @@ export default function Home() {
       title: "General Application",
       department: "General",
       location: "Remote / Multiple",
-      type: "Full-time / Contract",
       experienceRequired: "Any",
       description: "Submit your profile for future opportunities that match your skills.",
       status: "active",
@@ -281,7 +268,7 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative pt-20 pb-16 px-6 overflow-hidden">
+      <section className="relative pt-12 pb-16 px-6 overflow-hidden">
         <div className="max-w-5xl mx-auto text-center relative z-10">
           <div className="inline-flex items-center space-x-2 bg-gold-500/10 border border-gold-500/20 rounded-full px-4.5 py-1.5 mb-6 text-sm text-gold-300">
             <Sparkles className="h-4 w-4 text-gold-400 animate-pulse" />
@@ -289,11 +276,11 @@ export default function Home() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-white mb-6 leading-[1.15]">
-            Build your future with <span className="bg-linear-to-r from-gold-400 via-gold-400 to-pink-500 bg-clip-text text-transparent">Golden Dragon Careers</span>
+            Build your future with <span className="bg-linear-to-r  from-white via-gold-200 to-gold-400 bg-clip-text text-transparent">Golden Dragon</span>
           </h1>
 
           <p className="text-lg md:text-lg text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-           Connect with rewarding career opportunities across administration, production, logistics, healthcare, sales, technical services, and more. We partner with talented individuals who are ready to grow, succeed, and make a meaningful impact.
+            We partner with talented individuals who are ready to grow, succeed, and make a meaningful impact.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
@@ -301,18 +288,18 @@ export default function Home() {
               onClick={handleOpenGeneralApply}
               className="px-8 py-4 rounded-2xl bg-gold-600 hover:bg-gold-500 text-white font-bold transition-all shadow-lg shadow-gold-500/25 flex items-center space-x-2 group"
             >
-              <span>General Application</span>
+              <span>Quick Apply</span>
               <Send className="h-4 w-4" />
             </button>
           </div>
 
           {/* Job Search bar */}
-          <div className="max-w-xl mx-auto glass-card rounded-2xl p-2 shadow-2xl flex flex-col md:flex-row items-center gap-2">
+          <div className="mt-40 lg:mt-0 max-w-xl mx-auto glass-card rounded-2xl p-2 shadow-2xl flex flex-col md:flex-row items-center gap-2">
             <div className="relative w-full flex-1">
               <Search className="absolute left-4 top-3.5 h-5 w-5 text-slate-500" />
               <input
                 type="text"
-                placeholder="Search positions (e.g. Frontend)..."
+                placeholder="Search positions (e.g. Operations)..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full bg-transparent border-0 pl-11 pr-4 py-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-0 text-sm"
@@ -374,10 +361,6 @@ export default function Home() {
                   <div className="flex items-start justify-between mb-4">
                     <span className="inline-flex items-center rounded-lg bg-gold-500/10 px-2.5 py-1 text-xs font-semibold text-gold-400 border border-gold-500/20">
                       {job.department}
-                    </span>
-                    <span className="text-xs text-slate-500 flex items-center">
-                      <Clock className="h-3.5 w-3.5 mr-1" />
-                      {job.type}
                     </span>
                   </div>
 
