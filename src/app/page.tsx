@@ -60,47 +60,113 @@ export default function Home() {
     // We can fetch from API or hardcode the list for immediate load
     const mockJobsList: JobPosition[] = [
       {
-        id: "sr-frontend",
-        title: "Senior Frontend Engineer",
-        department: "Engineering",
-        location: "San Francisco, CA (Hybrid)",
-        type: "Full-time",
-        experienceRequired: "5+ years",
-        description: "We are looking for a Senior Frontend Engineer to build beautiful, responsive web applications using React, Next.js, and modern CSS/Tailwind. You will design, develop, and lead frontend architecture.",
-        salaryRange: "$140,000 - $170,000",
-        status: "active",
-      },
-      {
-        id: "product-mgr",
-        title: "Technical Product Manager",
-        department: "Product",
-        location: "Remote (US/Canada)",
-        type: "Full-time",
-        experienceRequired: "3+ years",
-        description: "Seeking a TPM to drive technical products. You will collaborate with engineering, design, and operations teams to ship features that empower our recruiters and customers.",
-        salaryRange: "$130,000 - $160,000",
-        status: "active",
-      },
-      {
-        id: "ui-designer",
-        title: "Lead UI/UX Designer",
-        department: "Design",
-        location: "New York, NY (On-site)",
+        id: "hr-partner",
+        title: "HR Business Partner",
+        department: "Administrative",
+        location: "Singapore",
         type: "Full-time",
         experienceRequired: "4+ years",
-        description: "Join our design studio to craft state-of-the-art interactive platforms. We value creativity, pixel-perfection, design systems, and rapid prototyping capabilities.",
-        salaryRange: "$120,000 - $150,000",
+        description: "Join our HR division to manage corporate talent strategy, employee relations, onboarding frameworks, and organizational health. You will partner with business unit heads to direct hiring strategies.",
         status: "active",
       },
       {
-        id: "backend-eng",
-        title: "Backend Engineer (Node/Go)",
-        department: "Engineering",
-        location: "Remote (Global)",
-        type: "Contract",
+        id: "fin-analyst",
+        title: "Senior Financial Analyst",
+        department: "Administrative",
+        location: "Singapore",
+        type: "Full-time",
+        experienceRequired: "5+ years",
+        description: "Seeking a Senior Analyst to direct financial modeling, budgeting, and monthly auditing reports. Experience with enterprise ERP systems and financial forecasting models is required.",
+        status: "active",
+      },
+      {
+        id: "growth-mkt",
+        title: "Growth Marketing Manager",
+        department: "Sales",
+        location: "Singapore",
+        type: "Full-time",
         experienceRequired: "3+ years",
-        description: "Help build scalable APIs, microservices, and databases. Strong experience with Node.js, Go, PostgreSQL, Redis, and cloud infrastructure (AWS/GCP) is required.",
-        salaryRange: "$80 - $110 / hour",
+        description: "Lead user acquisition and campaign management across PPC, social, and SEO channels. You will monitor metrics, run A/B testing, and collaborate with creative designers.",
+        status: "active",
+      },
+      {
+        id: "ops-coord",
+        title: "Operations Coordinator",
+        department: "General Operations",
+        location: "Singapore",
+        type: "Full-time",
+        experienceRequired: "2+ years",
+        description: "Provide administrative, logistial, and office management support. You will manage scheduling, vendor relationships, facility maintenance, and assist on corporate operational tasks.",
+        status: "active",
+      },
+      {
+        id: "sales-exec",
+        title: "Corporate Account Executive",
+        department: "Sales",
+        location: "Singapore",
+        type: "Full-time",
+        experienceRequired: "3+ years",
+        description: "Manage client acquisitions, close B2B enterprise deals, and run software demonstrations. Must have strong verbal communication skills and a track record of meeting revenue targets.",
+        status: "active",
+      },
+      {
+        id: "clean-1",
+        title: "Cleaning Specialist",
+        department: "General Operations",
+        location: "Singapore",
+        type: "Full-time",
+        experienceRequired: "1+ years",
+        description: "Maintain cleanliness of our facilities, ensuring a safe and hygienic environment for all staff and visitors.",
+        status: "active",
+      },
+      {
+        id: "drive-1",
+        title: "Driver / Chauffeur",
+        department: "General Operations",
+        location: "Singapore",
+        type: "Full-time",
+        experienceRequired: "2+ years",
+        description: "Provide safe and timely transportation for staff and guests. Maintaining vehicles and following traffic safety regulations is required.",
+        status: "active",
+      },
+      {
+        id: "food-1",
+        title: "Food Service Worker",
+        department: "General Operations",
+        location: "Singapore",
+        type: "Full-time",
+        experienceRequired: "1+ years",
+        description: "Prepare and serve high-quality food and beverages in our office cafeterias, ensuring hygiene standards are met.",
+        status: "active",
+      },
+      {
+        id: "gen-1",
+        title: "Production Operator",
+        department: "General Operations",
+        location: "Singapore",
+        type: "Full-time",
+        experienceRequired: "1+ years",
+        description: "Operate production machinery, monitor quality control, and ensure efficient workflow on the production line.",
+        status: "active",
+      },
+      {
+        id: "health-1",
+        title: "Wellness Coordinator",
+        department: "General Operations",
+        location: "Singapore",
+        type: "Full-time",
+        experienceRequired: "2+ years",
+        description: "Promote employee health and well-being through programs, workshops, and wellness initiatives.",
+        status: "active",
+      },
+      {
+        id: "sec-1",
+        title: "Security Guard",
+        department: "General Operations",
+        location: "Singapore",
+        type: "Full-time",
+        experienceRequired: "1+ years",
+        description: "Monitor and patrol facility, ensuring safety of personnel, assets, and premises.",
         status: "active",
       }
     ];
@@ -191,25 +257,25 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070b15] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(99,102,241,0.18),rgba(255,255,255,0))] text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#070b15] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(234,179,8,0.18),rgba(255,255,255,0))] text-slate-100 flex flex-col font-sans">
       
       {/* Header / Navbar */}
       <header className="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-[#070b15]/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-gold-500 to-gold-700 flex items-center justify-center shadow-lg shadow-gold-500/20">
               <Layers className="h-5 w-5 text-white" />
             </div>
-            <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-indigo-200 to-indigo-400 bg-clip-text text-transparent">
-              NextHire
+            <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-gold-200 to-gold-400 bg-clip-text text-transparent">
+              Golden Dragon Careers
             </span>
           </div>
 
           <nav className="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-400">
-            <a href="#" className="text-indigo-400 transition-colors">Careers</a>
+            <a href="#" className="text-gold-400 transition-colors">Careers</a>
             <a href="#" className="hover:text-slate-200 transition-colors">Our Values</a>
             <a href="#" className="hover:text-slate-200 transition-colors">Benefits</a>
-            <a href="/admin" className="px-4 py-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-indigo-400 hover:text-indigo-300 transition-all flex items-center space-x-1.5 shadow-sm">
+            <a href="/admin" className="px-4 py-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-gold-400 hover:text-gold-300 transition-all flex items-center space-x-1.5 shadow-sm">
               <span>Recruiter Portal</span>
               <ArrowUpRight className="h-3.5 w-3.5" />
             </a>
@@ -220,13 +286,13 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative pt-20 pb-16 px-6 overflow-hidden">
         <div className="max-w-5xl mx-auto text-center relative z-10">
-          <div className="inline-flex items-center space-x-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full px-4.5 py-1.5 mb-6 text-sm text-indigo-300">
-            <Sparkles className="h-4 w-4 text-indigo-400 animate-pulse" />
+          <div className="inline-flex items-center space-x-2 bg-gold-500/10 border border-gold-500/20 rounded-full px-4.5 py-1.5 mb-6 text-sm text-gold-300">
+            <Sparkles className="h-4 w-4 text-gold-400 animate-pulse" />
             <span>We are actively hiring globally</span>
           </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-white mb-6 leading-[1.15]">
-            Build the future of recruitment with <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-500 bg-clip-text text-transparent">NextHire</span>
+            Build the future of recruitment with <span className="bg-gradient-to-r from-gold-400 via-gold-400 to-pink-500 bg-clip-text text-transparent">Golden Dragon Careers</span>
           </h1>
 
           <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
@@ -235,21 +301,11 @@ export default function Home() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
             <button 
-              onClick={() => {
-                const element = document.getElementById('open-positions');
-                element?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="px-8 py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all shadow-lg shadow-indigo-500/25 flex items-center space-x-2 group"
-            >
-              <span>View Openings</span>
-              <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-            </button>
-            <button 
               onClick={handleOpenGeneralApply}
-              className="px-8 py-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 font-bold transition-all flex items-center space-x-2"
+              className="px-8 py-4 rounded-2xl bg-gold-600 hover:bg-gold-500 text-white font-bold transition-all shadow-lg shadow-gold-500/25 flex items-center space-x-2 group"
             >
               <span>General Application</span>
-              <Send className="h-4 w-4 text-slate-500" />
+              <Send className="h-4 w-4" />
             </button>
           </div>
 
@@ -271,7 +327,7 @@ export default function Home() {
               <select
                 value={selectedDept}
                 onChange={(e) => setSelectedDept(e.target.value)}
-                className="bg-slate-900 border border-slate-800 text-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 cursor-pointer w-full md:w-auto"
+                className="bg-slate-900 border border-slate-800 text-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gold-500 cursor-pointer w-full md:w-auto"
               >
                 {departments.map(dept => (
                   <option key={dept} value={dept}>{dept} Departments</option>
@@ -293,7 +349,7 @@ export default function Home() {
           <div className="flex items-center space-x-2 bg-slate-900/60 border border-slate-800/80 rounded-xl p-1 text-xs text-slate-400">
             <button 
               onClick={() => setSelectedDept("All")}
-              className={`px-3 py-1.5 rounded-lg transition-colors ${selectedDept === "All" ? "bg-indigo-600 text-white" : "hover:text-slate-200"}`}
+              className={`px-3 py-1.5 rounded-lg transition-colors ${selectedDept === "All" ? "bg-gold-600 text-white" : "hover:text-slate-200"}`}
             >
               All Openings
             </button>
@@ -301,7 +357,7 @@ export default function Home() {
               <button 
                 key={dept}
                 onClick={() => setSelectedDept(dept)}
-                className={`px-3 py-1.5 rounded-lg transition-colors ${selectedDept === dept ? "bg-indigo-600 text-white" : "hover:text-slate-200"}`}
+                className={`px-3 py-1.5 rounded-lg transition-colors ${selectedDept === dept ? "bg-gold-600 text-white" : "hover:text-slate-200"}`}
               >
                 {dept}
               </button>
@@ -319,7 +375,7 @@ export default function Home() {
               >
                 <div>
                   <div className="flex items-start justify-between mb-4">
-                    <span className="inline-flex items-center rounded-lg bg-indigo-500/10 px-2.5 py-1 text-xs font-semibold text-indigo-400 border border-indigo-500/20">
+                    <span className="inline-flex items-center rounded-lg bg-gold-500/10 px-2.5 py-1 text-xs font-semibold text-gold-400 border border-gold-500/20">
                       {job.department}
                     </span>
                     <span className="text-xs text-slate-500 flex items-center">
@@ -328,7 +384,7 @@ export default function Home() {
                     </span>
                   </div>
 
-                  <h3 className="text-xl font-bold text-slate-100 hover:text-indigo-400 transition-colors cursor-pointer mb-2">
+                  <h3 className="text-xl font-bold text-slate-100 hover:text-gold-400 transition-colors cursor-pointer mb-2">
                     {job.title}
                   </h3>
 
@@ -343,17 +399,11 @@ export default function Home() {
                       <MapPin className="h-3.5 w-3.5 mr-1 text-slate-500" />
                       {job.location}
                     </span>
-                    {job.salaryRange && (
-                      <span className="flex items-center text-emerald-400 font-medium">
-                        <DollarSign className="h-3.5 w-3.5 mr-0.5" />
-                        {job.salaryRange}
-                      </span>
-                    )}
                   </div>
 
                   <button
                     onClick={() => handleOpenApply(job)}
-                    className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-medium text-sm transition-all shadow-md hover:shadow-lg hover:shadow-indigo-500/15 flex items-center justify-center space-x-2"
+                    className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-gold-600 to-gold-700 hover:from-gold-500 hover:to-gold-600 text-white font-medium text-sm transition-all shadow-md hover:shadow-lg hover:shadow-gold-500/15 flex items-center justify-center space-x-2"
                   >
                     <span>Apply Now</span>
                     <ArrowRight className="h-4 w-4" />
@@ -381,7 +431,7 @@ export default function Home() {
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-slate-800/80 bg-slate-900/60 flex items-center justify-between">
               <div>
-                <span className="text-xs font-semibold text-indigo-400 tracking-wider uppercase">Application Form</span>
+                <span className="text-xs font-semibold text-gold-400 tracking-wider uppercase">Application Form</span>
                 <h3 className="text-lg font-bold text-white mt-0.5">{selectedJob.title}</h3>
               </div>
               <button 
@@ -427,7 +477,7 @@ export default function Home() {
                     
                     {selectedJob.id === "general" && (
                       <div className="pb-2">
-                        <label htmlFor="customPosition" className="block text-xs font-semibold text-indigo-400 mb-1.5 flex items-center">
+                        <label htmlFor="customPosition" className="block text-xs font-semibold text-gold-400 mb-1.5 flex items-center">
                           <Sparkles className="h-3 w-3 mr-1.5" />
                           What position are you interested in? *
                         </label>
@@ -439,7 +489,7 @@ export default function Home() {
                           value={formData.customPosition}
                           onChange={handleInputChange}
                           placeholder="e.g. Senior Marketing Lead, Creative Director, etc."
-                          className="w-full bg-indigo-500/5 border border-indigo-500/20 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none shadow-inner"
+                          className="w-full bg-gold-500/5 border border-gold-500/20 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none shadow-inner"
                         />
                       </div>
                     )}
@@ -455,7 +505,7 @@ export default function Home() {
                           value={formData.name}
                           onChange={handleInputChange}
                           placeholder="e.g. John Doe"
-                          className="w-full bg-slate-900/60 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
+                          className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
                         />
                       </div>
 
@@ -469,7 +519,7 @@ export default function Home() {
                           value={formData.email}
                           onChange={handleInputChange}
                           placeholder="john.doe@example.com"
-                          className="w-full bg-slate-900/60 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
+                          className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
                         />
                       </div>
 
@@ -483,7 +533,7 @@ export default function Home() {
                           value={formData.phone}
                           onChange={handleInputChange}
                           placeholder="+1 (555) 000-0000"
-                          className="w-full bg-slate-900/60 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
+                          className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
                         />
                       </div>
 
@@ -494,7 +544,7 @@ export default function Home() {
                           name="experience"
                           value={formData.experience}
                           onChange={handleInputChange}
-                          className="w-full bg-slate-900/60 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none cursor-pointer"
+                          className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none cursor-pointer"
                         >
                           <option>Less than 1 Year</option>
                           <option>1-3 Years</option>
@@ -522,7 +572,7 @@ export default function Home() {
                           value={formData.linkedin}
                           onChange={handleInputChange}
                           placeholder="https://linkedin.com/in/username"
-                          className="w-full bg-slate-900/60 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
+                          className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
                         />
                       </div>
 
@@ -536,7 +586,7 @@ export default function Home() {
                             value={formData.portfolio}
                             onChange={handleInputChange}
                             placeholder="https://myportfolio.com"
-                            className="w-full bg-slate-900/60 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
+                            className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
                           />
                         </div>
                       )}
@@ -552,7 +602,7 @@ export default function Home() {
                         value={formData.resumeUrl}
                         onChange={handleInputChange}
                         placeholder="Link to hosted Resume PDF (Google Drive, Dropbox, Dropbox, etc.)"
-                        className="w-full bg-slate-900/60 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
+                        className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
                       />
                     </div>
                   </div>
@@ -570,7 +620,7 @@ export default function Home() {
                         name="noticePeriod"
                         value={formData.noticePeriod}
                         onChange={handleInputChange}
-                        className="w-full bg-slate-900/60 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none cursor-pointer"
+                        className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none cursor-pointer"
                       >
                         <option>Immediate</option>
                         <option>2 Weeks</option>
@@ -590,7 +640,7 @@ export default function Home() {
                         value={formData.coverLetter}
                         onChange={handleInputChange}
                         placeholder="Tell us why you are a great fit for this position..."
-                        className="w-full bg-slate-900/60 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none resize-none"
+                        className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none resize-none"
                       />
                     </div>
                   </div>
@@ -607,7 +657,7 @@ export default function Home() {
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 disabled:from-indigo-800 disabled:to-indigo-800 text-white font-semibold text-sm transition-all flex items-center space-x-2 shadow-lg shadow-indigo-500/20"
+                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-gold-600 to-gold-700 hover:from-gold-500 hover:to-gold-600 disabled:from-gold-800 disabled:to-gold-800 text-white font-semibold text-sm transition-all flex items-center space-x-2 shadow-lg shadow-gold-500/20"
                     >
                       {isSubmitting ? (
                         <span>Submitting...</span>
@@ -630,7 +680,7 @@ export default function Home() {
       <footer className="border-t border-slate-900 bg-slate-950 py-12 mt-auto">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500">
           <div className="flex items-center space-x-2 mb-4 md:mb-0">
-            <span className="font-semibold text-slate-400">&copy; 2026 NextHire Inc.</span>
+            <span className="font-semibold text-slate-400">&copy; 2026 Golden Dragon Careers Inc.</span>
             <span>&bull;</span>
             <span>All rights reserved.</span>
           </div>

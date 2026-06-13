@@ -141,7 +141,7 @@ export default function AdminDashboard() {
   const statusColors: Record<Applicant["status"], string> = {
     applied: "bg-blue-500/10 text-blue-400 border border-blue-500/20",
     interviewing: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
-    offered: "bg-purple-500/10 text-purple-400 border border-purple-500/20",
+    offered: "bg-gold-500/10 text-gold-400 border border-gold-500/20",
     rejected: "bg-rose-500/10 text-rose-400 border border-rose-500/20",
     hired: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
   };
@@ -167,7 +167,7 @@ export default function AdminDashboard() {
       <header className="sticky top-0 z-40 w-full border-b border-slate-800 bg-[#070b15]/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <a href="/" className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+            <a href="/" className="h-10 w-10 rounded-xl bg-gradient-to-br from-gold-500 to-gold-700 flex items-center justify-center shadow-lg shadow-gold-500/20">
               <ClipboardList className="h-5 w-5 text-white" />
             </a>
             <div>
@@ -193,7 +193,7 @@ export default function AdminDashboard() {
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {/* Card 1: Total */}
           <div className="glass-card rounded-2xl p-5 flex items-center space-x-4">
-            <div className="h-12 w-12 rounded-xl bg-indigo-500/10 border border-indigo-500/25 flex items-center justify-center text-indigo-400">
+            <div className="h-12 w-12 rounded-xl bg-gold-500/10 border border-gold-500/25 flex items-center justify-center text-gold-400">
               <Users className="h-6 w-6" />
             </div>
             <div>
@@ -215,7 +215,7 @@ export default function AdminDashboard() {
 
           {/* Card 3: Offered */}
           <div className="glass-card rounded-2xl p-5 flex items-center space-x-4">
-            <div className="h-12 w-12 rounded-xl bg-purple-500/10 border border-purple-500/25 flex items-center justify-center text-purple-400">
+            <div className="h-12 w-12 rounded-xl bg-gold-500/10 border border-gold-500/25 flex items-center justify-center text-gold-400">
               <UserCheck className="h-6 w-6" />
             </div>
             <div>
@@ -247,7 +247,7 @@ export default function AdminDashboard() {
                 placeholder="Search candidates by name, email, or role..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-slate-900/60 border border-slate-800 rounded-xl pl-11 pr-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-slate-900/60 border border-slate-800 rounded-xl pl-11 pr-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-gold-500"
               />
             </div>
 
@@ -259,7 +259,7 @@ export default function AdminDashboard() {
                   onClick={() => setStatusFilter(status)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
                     statusFilter === status 
-                      ? "bg-indigo-600 text-white shadow-sm" 
+                      ? "bg-gold-600 text-white shadow-sm" 
                       : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
@@ -293,7 +293,7 @@ export default function AdminDashboard() {
                       onClick={() => setSelectedApplicant(app)}
                     >
                       <td className="py-4.5 px-6">
-                        <div className="font-semibold text-slate-100 group-hover:text-indigo-400 transition-colors">
+                        <div className="font-semibold text-slate-100 group-hover:text-gold-400 transition-colors">
                           {app.name}
                         </div>
                         <div className="text-xs text-slate-500 mt-0.5">{app.email}</div>
@@ -348,7 +348,7 @@ export default function AdminDashboard() {
             {/* Drawer Header */}
             <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
               <div>
-                <span className="text-xs font-semibold text-indigo-400 tracking-widest uppercase">Candidate Review</span>
+                <span className="text-xs font-semibold text-gold-400 tracking-widest uppercase">Candidate Review</span>
                 <h3 className="text-xl font-bold text-white mt-0.5">{selectedApplicant.name}</h3>
               </div>
               <button
@@ -375,7 +375,7 @@ export default function AdminDashboard() {
                     disabled={savingStatus}
                     value={selectedApplicant.status}
                     onChange={(e) => handleUpdateStatus(selectedApplicant.id, e.target.value as Applicant["status"])}
-                    className="bg-slate-900 border border-slate-800 text-slate-200 text-xs font-semibold rounded-lg px-3 py-2 cursor-pointer focus:outline-none focus:border-indigo-500"
+                    className="bg-slate-900 border border-slate-800 text-slate-200 text-xs font-semibold rounded-lg px-3 py-2 cursor-pointer focus:outline-none focus:border-gold-500"
                   >
                     <option value="applied">Applied</option>
                     <option value="interviewing">Interviewing</option>
@@ -394,7 +394,7 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex items-center space-x-3 text-sm text-slate-300">
                     <Mail className="h-4.5 w-4.5 text-slate-500 shrink-0" />
-                    <a href={`mailto:${selectedApplicant.email}`} className="hover:text-indigo-400 transition-colors truncate">
+                    <a href={`mailto:${selectedApplicant.email}`} className="hover:text-gold-400 transition-colors truncate">
                       {selectedApplicant.email}
                     </a>
                   </div>
@@ -423,7 +423,7 @@ export default function AdminDashboard() {
                       href={selectedApplicant.linkedin} 
                       target="_blank" 
                       rel="noreferrer"
-                      className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs font-semibold hover:bg-indigo-500/20 transition-colors"
+                      className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-gold-500/10 text-gold-400 border border-gold-500/20 text-xs font-semibold hover:bg-gold-500/20 transition-colors"
                     >
                       <span>LinkedIn</span>
                       <ExternalLink className="h-3 w-3" />
@@ -497,13 +497,13 @@ export default function AdminDashboard() {
                     value={noteText}
                     onChange={(e) => setNoteText(e.target.value)}
                     placeholder="Add interview assessment feedback, resume notes, or call logs here..."
-                    className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 rounded-xl p-3 text-xs text-slate-200 placeholder-slate-600 focus:outline-none resize-none"
+                    className="w-full bg-slate-900 border border-slate-800 focus:border-gold-500 rounded-xl p-3 text-xs text-slate-200 placeholder-slate-600 focus:outline-none resize-none"
                   />
                   <div className="flex justify-end">
                     <button
                       type="submit"
                       disabled={savingNote}
-                      className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-colors flex items-center space-x-1.5 cursor-pointer"
+                      className="px-4 py-2 rounded-xl bg-gold-600 hover:bg-gold-500 text-white font-semibold text-xs transition-colors flex items-center space-x-1.5 cursor-pointer"
                     >
                       <Plus className="h-3.5 w-3.5" />
                       <span>{savingNote ? "Saving..." : "Add Note"}</span>
@@ -520,7 +520,7 @@ export default function AdminDashboard() {
       {/* Footer */}
       <footer className="border-t border-slate-900 bg-slate-950 py-6 mt-auto">
         <div className="max-w-7xl mx-auto px-6 text-center text-xs text-slate-500">
-          <span>&copy; 2026 NextHire Internal Application Tracking System.</span>
+          <span>&copy; 2026 Golden Dragon Careers Internal Application Tracking System.</span>
         </div>
       </footer>
     </div>

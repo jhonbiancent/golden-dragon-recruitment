@@ -15,6 +15,17 @@
   --color-primary-800: #166534;
   --color-primary-900: #14532d;
   
+  --color-gold-50: #fefce8;
+  --color-gold-100: #fef9c3;
+  --color-gold-200: #fef08a;
+  --color-gold-300: #fde047;
+  --color-gold-400: #facc15;
+  --color-gold-500: #eab308;
+  --color-gold-600: #ca8a04;
+  --color-gold-700: #a16207;
+  --color-gold-800: #854d0e;
+  --color-gold-900: #713f12;
+  
   --color-brand-50: #eef2ff;
   --color-brand-100: #e0e7ff;
   --color-brand-200: #c7d2fe;
@@ -39,8 +50,8 @@
   }
   .glass-card-hover:hover {
     background: rgba(15, 23, 42, 0.6);
-    border-color: rgba(99, 102, 241, 0.3);
-    box-shadow: 0 0 25px rgba(99, 102, 241, 0.15);
+    border-color: rgba(234, 179, 8, 0.3);
+    box-shadow: 0 0 25px rgba(234, 179, 8, 0.15);
     transform: translateY(-2px);
   }
 }

@@ -18,7 +18,7 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "NextHire | Premium Applicant Tracking & Recruitment",
+  title: "Golden Dragon Careers | Premium Applicant Tracking & Recruitment",
   description: "Next-gen applicant management and recruitment platform.",
 };
 
