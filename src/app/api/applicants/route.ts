@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { getApplicants, updateApplicantStatus, addApplicantNote, seedSupabaseIfNeeded } from "@/lib/db";
+import { getApplicants, updateApplicantStatus, addApplicantNote } from "@/lib/db";
 
 export async function GET() {
   try {
-    await seedSupabaseIfNeeded();
     const applicants = await getApplicants();
-    return NextResponse.json({ applicants });
+    return Response.json({ applicants });
   } catch (error) {
     console.error("API Error fetching applicants:", error);
     return NextResponse.json(

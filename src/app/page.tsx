@@ -5,15 +5,12 @@ import {
   Briefcase, 
   MapPin, 
   Clock, 
-  DollarSign, 
   Search, 
-  Filter, 
   X, 
   Send, 
   CheckCircle,
   Sparkles,
   ArrowRight,
-  Shield,
   Layers,
   ArrowUpRight
 } from "lucide-react";
@@ -42,13 +39,13 @@ export default function Home() {
     name: "",
     email: "",
     phone: "",
-    experience: "1-3 Years",
-    linkedin: "",
-    portfolio: "",
     resumeUrl: "",
-    coverLetter: "",
-    noticePeriod: "Immediate",
     customPosition: "",
+    age: "",
+    nationality: "",
+    expectedSalary: "",
+    availability: "",
+    passType: "Singapore citizen",
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -238,13 +235,13 @@ export default function Home() {
           name: "",
           email: "",
           phone: "",
-          experience: "1-3 Years",
-          linkedin: "",
-          portfolio: "",
           resumeUrl: "",
-          coverLetter: "",
-          noticePeriod: "Immediate",
           customPosition: "",
+          age: "",
+          nationality: "",
+          expectedSalary: "",
+          availability: "",
+          passType: "Singapore citizen",
         });
       } else {
         setErrorMessage(data.error || "Failed to submit application.");
@@ -263,10 +260,10 @@ export default function Home() {
       <header className="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-[#070b15]/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-gold-500 to-gold-700 flex items-center justify-center shadow-lg shadow-gold-500/20">
+            <div className="h-10 w-10 rounded-xl bg-linear-to-br from-gold-500 to-gold-700 flex items-center justify-center shadow-lg shadow-gold-500/20">
               <Layers className="h-5 w-5 text-white" />
             </div>
-            <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-gold-200 to-gold-400 bg-clip-text text-transparent">
+            <span className="text-xl font-bold tracking-tight bg-linear-to-r from-white via-gold-200 to-gold-400 bg-clip-text text-transparent">
               Golden Dragon Careers
             </span>
           </div>
@@ -292,11 +289,11 @@ export default function Home() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-white mb-6 leading-[1.15]">
-            Build the future of recruitment with <span className="bg-gradient-to-r from-gold-400 via-gold-400 to-pink-500 bg-clip-text text-transparent">Golden Dragon Careers</span>
+            Build your future with <span className="bg-linear-to-r from-gold-400 via-gold-400 to-pink-500 bg-clip-text text-transparent">Golden Dragon Careers</span>
           </h1>
 
-          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Join a fast-growing team of innovators, engineers, and creators. We value ambition, diversity, and pixel-perfect digital experiences.
+          <p className="text-lg md:text-lg text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+           Connect with rewarding career opportunities across administration, production, logistics, healthcare, sales, technical services, and more. We partner with talented individuals who are ready to grow, succeed, and make a meaningful impact.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
@@ -339,17 +336,17 @@ export default function Home() {
       </section>
 
       {/* Main Jobs Section */}
-      <main className="flex-grow max-w-6xl w-full mx-auto px-6 pb-24">
-        <div className="flex items-center justify-between mb-8">
+      <main className="grow max-w-6xl w-full mx-auto px-6 pb-24">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
             <h2 className="text-2xl font-bold text-white tracking-tight">Open Positions</h2>
             <p className="text-sm text-slate-500 mt-1">Found {filteredJobs.length} opportunities for you</p>
           </div>
           
-          <div className="flex items-center space-x-2 bg-slate-900/60 border border-slate-800/80 rounded-xl p-1 text-xs text-slate-400">
+          <div className="flex flex-wrap items-center space-x-2 bg-slate-900/60 border border-slate-800/80 rounded-xl p-1 text-xs text-slate-400 gap-y-2">
             <button 
               onClick={() => setSelectedDept("All")}
-              className={`px-3 py-1.5 rounded-lg transition-colors ${selectedDept === "All" ? "bg-gold-600 text-white" : "hover:text-slate-200"}`}
+              className={`px-3 py-1.5 rounded-lg border border-slate-700 transition-colors ${selectedDept === "All" ? "bg-gold-600 border-gold-600 text-white" : "hover:text-slate-200 hover:border-slate-600"}`}
             >
               All Openings
             </button>
@@ -357,7 +354,7 @@ export default function Home() {
               <button 
                 key={dept}
                 onClick={() => setSelectedDept(dept)}
-                className={`px-3 py-1.5 rounded-lg transition-colors ${selectedDept === dept ? "bg-gold-600 text-white" : "hover:text-slate-200"}`}
+                className={`px-3 py-1.5 rounded-lg border border-slate-700 transition-colors ${selectedDept === dept ? "bg-gold-600 border-gold-600 text-white" : "hover:text-slate-200 hover:border-slate-600"}`}
               >
                 {dept}
               </button>
@@ -403,7 +400,7 @@ export default function Home() {
 
                   <button
                     onClick={() => handleOpenApply(job)}
-                    className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-gold-600 to-gold-700 hover:from-gold-500 hover:to-gold-600 text-white font-medium text-sm transition-all shadow-md hover:shadow-lg hover:shadow-gold-500/15 flex items-center justify-center space-x-2"
+                    className="w-full py-2.5 px-4 rounded-xl bg-linear-to-r from-gold-600 to-gold-700 hover:from-gold-500 hover:to-gold-600 text-white font-medium text-sm transition-all shadow-md hover:shadow-lg hover:shadow-gold-500/15 flex items-center justify-center space-x-2"
                   >
                     <span>Apply Now</span>
                     <ArrowRight className="h-4 w-4" />
@@ -475,25 +472,6 @@ export default function Home() {
                       Personal Details
                     </h4>
                     
-                    {selectedJob.id === "general" && (
-                      <div className="pb-2">
-                        <label htmlFor="customPosition" className="block text-xs font-semibold text-gold-400 mb-1.5 flex items-center">
-                          <Sparkles className="h-3 w-3 mr-1.5" />
-                          What position are you interested in? *
-                        </label>
-                        <input
-                          id="customPosition"
-                          type="text"
-                          name="customPosition"
-                          required
-                          value={formData.customPosition}
-                          onChange={handleInputChange}
-                          placeholder="e.g. Senior Marketing Lead, Creative Director, etc."
-                          className="w-full bg-gold-500/5 border border-gold-500/20 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none shadow-inner"
-                        />
-                      </div>
-                    )}
-                    
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label htmlFor="name" className="block text-xs font-semibold text-slate-400 mb-1.5">Full Name *</label>
@@ -538,58 +516,105 @@ export default function Home() {
                       </div>
 
                       <div>
-                        <label htmlFor="experience" className="block text-xs font-semibold text-slate-400 mb-1.5">Years of Relevant Experience *</label>
-                        <select
-                          id="experience"
-                          name="experience"
-                          value={formData.experience}
+                        <label htmlFor="age" className="block text-xs font-semibold text-slate-400 mb-1.5">Age *</label>
+                        <input
+                          id="age"
+                          type="number"
+                          name="age"
+                          min="0"
+                          required
+                          value={formData.age}
                           onChange={handleInputChange}
-                          className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none cursor-pointer"
-                        >
-                          <option>Less than 1 Year</option>
-                          <option>1-3 Years</option>
-                          <option>3-5 Years</option>
-                          <option>5-8 Years</option>
-                          <option>8+ Years</option>
-                        </select>
+                          placeholder="e.g. 25"
+                          className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
+                        />
                       </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="nationality" className="block text-xs font-semibold text-slate-400 mb-1.5">Nationality *</label>
+                        <input
+                          id="nationality"
+                          type="text"
+                          name="nationality"
+                          required
+                          value={formData.nationality}
+                          onChange={handleInputChange}
+                          placeholder="e.g. Singaporean"
+                          className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
+                        />
+                      </div>
+                      
+                    {selectedJob.id === "general" && (
+                      <div>
+                        <label htmlFor="customPosition" className="block text-xs font-semibold text-gold-400 mb-1.5">Position Applied For *</label>
+                        <input
+                          id="customPosition"
+                          type="text"
+                          name="customPosition"
+                          required
+                          value={formData.customPosition}
+                          onChange={handleInputChange}
+                          placeholder="e.g. Senior Marketing Lead"
+                          className="w-full bg-gold-500/5 border border-gold-500/20 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none shadow-inner"
+                        />
+                      </div>
+                    )}
                     </div>
                   </div>
 
-                  {/* Form section: Links & Attachments */}
+                  {/* Form section: Professional & Availability */}
                   <div className="space-y-4">
                     <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800 pb-2">
-                      Professional Links & CV
+                      Professional & Availability
                     </h4>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label htmlFor="linkedin" className="block text-xs font-semibold text-slate-400 mb-1.5">LinkedIn Profile URL</label>
+                        <label htmlFor="expectedSalary" className="block text-xs font-semibold text-slate-400 mb-1.5">Expected Salary *</label>
                         <input
-                          id="linkedin"
-                          type="url"
-                          name="linkedin"
-                          value={formData.linkedin}
+                          id="expectedSalary"
+                          type="text"
+                          name="expectedSalary"
+                          required
+                          value={formData.expectedSalary}
                           onChange={handleInputChange}
-                          placeholder="https://linkedin.com/in/username"
+                          placeholder="e.g. 600 SGD"
                           className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
                         />
                       </div>
+                      
+                      <div>
+                        <label htmlFor="availability" className="block text-xs font-semibold text-slate-400 mb-1.5">Availability *</label>
+                        <input
+                          id="availability"
+                          type="date"
+                          name="availability"
+                          required
+                          value={formData.availability}
+                          onChange={handleInputChange}
+                          className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
+                        />
+                      </div>
+                    </div>
 
-                      {selectedJob.id !== "general" && (
-                        <div>
-                          <label htmlFor="portfolio" className="block text-xs font-semibold text-slate-400 mb-1.5">Portfolio / Website URL</label>
-                          <input
-                            id="portfolio"
-                            type="url"
-                            name="portfolio"
-                            value={formData.portfolio}
-                            onChange={handleInputChange}
-                            placeholder="https://myportfolio.com"
-                            className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
-                          />
-                        </div>
-                      )}
+                    <div>
+                      <label htmlFor="passType" className="block text-xs font-semibold text-slate-400 mb-1.5">Pass Currently Holding *</label>
+                      <select
+                        id="passType"
+                        name="passType"
+                        value={formData.passType}
+                        onChange={handleInputChange}
+                        className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none cursor-pointer"
+                      >
+                        <option>Singapore citizen</option>
+                        <option>PR</option>
+                        <option>Work Permit</option>
+                        <option>S Pass</option>
+                        <option>E Pass</option>
+                        <option>Social Visit</option>
+                      </select>
                     </div>
 
                     <div>
@@ -601,46 +626,8 @@ export default function Home() {
                         required
                         value={formData.resumeUrl}
                         onChange={handleInputChange}
-                        placeholder="Link to hosted Resume PDF (Google Drive, Dropbox, Dropbox, etc.)"
+                        placeholder="Link to hosted Resume PDF"
                         className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Form section: Extra Info */}
-                  <div className="space-y-4">
-                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800 pb-2">
-                      Notice Period & Statement
-                    </h4>
-
-                    <div>
-                      <label htmlFor="noticePeriod" className="block text-xs font-semibold text-slate-400 mb-1.5">Notice Period *</label>
-                      <select
-                        id="noticePeriod"
-                        name="noticePeriod"
-                        value={formData.noticePeriod}
-                        onChange={handleInputChange}
-                        className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none cursor-pointer"
-                      >
-                        <option>Immediate</option>
-                        <option>2 Weeks</option>
-                        <option>1 Month</option>
-                        <option>2 Months</option>
-                        <option>3+ Months</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label htmlFor="coverLetter" className="block text-xs font-semibold text-slate-400 mb-1.5">Cover Letter / Statement of Interest *</label>
-                      <textarea
-                        id="coverLetter"
-                        name="coverLetter"
-                        required
-                        rows={4}
-                        value={formData.coverLetter}
-                        onChange={handleInputChange}
-                        placeholder="Tell us why you are a great fit for this position..."
-                        className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none resize-none"
                       />
                     </div>
                   </div>
@@ -657,7 +644,7 @@ export default function Home() {
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-gold-600 to-gold-700 hover:from-gold-500 hover:to-gold-600 disabled:from-gold-800 disabled:to-gold-800 text-white font-semibold text-sm transition-all flex items-center space-x-2 shadow-lg shadow-gold-500/20"
+                      className="px-6 py-2.5 rounded-xl bg-linear-to-r from-gold-600 to-gold-700 hover:from-gold-500 hover:to-gold-600 disabled:from-gold-800 disabled:to-gold-800 text-white font-semibold text-sm transition-all flex items-center space-x-2 shadow-lg shadow-gold-500/20"
                     >
                       {isSubmitting ? (
                         <span>Submitting...</span>
@@ -680,7 +667,7 @@ export default function Home() {
       <footer className="border-t border-slate-900 bg-slate-950 py-12 mt-auto">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500">
           <div className="flex items-center space-x-2 mb-4 md:mb-0">
-            <span className="font-semibold text-slate-400">&copy; 2026 Golden Dragon Careers Inc.</span>
+            <span className="font-semibold text-slate-400">&copy; 2026 Golden Dragon Employment Agency</span>
             <span>&bull;</span>
             <span>All rights reserved.</span>
           </div>

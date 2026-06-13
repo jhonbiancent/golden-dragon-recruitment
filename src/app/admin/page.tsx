@@ -7,9 +7,7 @@ import {
   FileText, 
   X, 
   Search, 
-  Filter, 
   ExternalLink,
-  MessageSquare,
   Plus,
   TrendingUp,
   Mail,
@@ -167,7 +165,7 @@ export default function AdminDashboard() {
       <header className="sticky top-0 z-40 w-full border-b border-slate-800 bg-[#070b15]/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <a href="/" className="h-10 w-10 rounded-xl bg-gradient-to-br from-gold-500 to-gold-700 flex items-center justify-center shadow-lg shadow-gold-500/20">
+            <a href="/" className="h-10 w-10 rounded-xl bg-linear-to-br from-gold-500 to-gold-700 flex items-center justify-center shadow-lg shadow-gold-500/20">
               <ClipboardList className="h-5 w-5 text-white" />
             </a>
             <div>
@@ -187,7 +185,7 @@ export default function AdminDashboard() {
       </header>
 
       {/* Main Body */}
-      <main className="flex-grow max-w-7xl w-full mx-auto px-6 py-10 space-y-8">
+      <main className="grow max-w-7xl w-full mx-auto px-6 py-10 space-y-8">
         
         {/* Stats Grid */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -231,7 +229,7 @@ export default function AdminDashboard() {
             </div>
             <div>
               <span className="text-xs font-medium text-slate-500 block">Successfully Hired</span>
-              <span className="text-2xl font-extrabold text-white mt-0.5 text-emerald-400">{hiredCount}</span>
+              <span className="text-2xl font-extrabold  mt-0.5 text-emerald-400">{hiredCount}</span>
             </div>
           </div>
         </section>

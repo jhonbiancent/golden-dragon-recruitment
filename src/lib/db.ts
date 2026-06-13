@@ -7,20 +7,18 @@ export interface RecruiterNote {
   text: string;
   createdAt: string;
 }
-
 export interface Applicant {
   id: string;
   name: string;
   email: string;
   phone: string;
-  positionId: string;
+  age: number;
+  nationality: string;
   positionTitle: string;
-  experience: string;
-  linkedin?: string;
-  portfolio?: string;
-  resumeUrl?: string;
-  coverLetter: string;
-  noticePeriod: string;
+  expectedSalary: string;
+  availability: string;
+  passType: string;
+  resumeUrl: string;
   status: "applied" | "interviewing" | "offered" | "rejected" | "hired";
   notes: RecruiterNote[];
   appliedAt: string;
@@ -164,48 +162,7 @@ const CORPORATE_JOBS: JobPosition[] = [
   }
 ];
 
-const INITIAL_APPLICANTS: Applicant[] = [
-  {
-    id: "app-1",
-    name: "Alexander Wright",
-    email: "alexander.wright@devmail.io",
-    phone: "+1 (555) 019-2834",
-    positionId: "sr-frontend",
-    positionTitle: "Senior Frontend Engineer",
-    experience: "6 years",
-    linkedin: "https://linkedin.com/in/alexander-wright-dev",
-    portfolio: "https://wright-codes.dev",
-    resumeUrl: "https://wright-codes.dev/resume.pdf",
-    coverLetter: "I'm highly excited about Golden Dragon Careers! I have built premium design systems and highly interactive user dashboards in my previous roles. I'd love to bring my React and CSS skills to the team.",
-    noticePeriod: "Immediate",
-    status: "interviewing",
-    notes: [
-      {
-        id: "note-1",
-        text: "Strong portfolio with rich interactive components. Fits standard requirements perfectly.",
-        createdAt: "2026-06-11T10:00:00Z"
-      }
-    ],
-    appliedAt: "2026-06-10T08:30:00Z"
-  },
-  {
-    id: "app-2",
-    name: "Sarah Chen",
-    email: "sarah.chen@uxdesign.net",
-    phone: "+1 (555) 043-9876",
-    positionId: "hr-partner",
-    positionTitle: "HR Business Partner",
-    experience: "5 years",
-    linkedin: "https://linkedin.com/in/sarah-chen-hr",
-    portfolio: "",
-    resumeUrl: "https://sarahchen.design/resume_2026.pdf",
-    coverLetter: "I specialize in organizational design and corporate culture mapping. Excited about the prospect of streamlining your HR processes.",
-    noticePeriod: "1 Month",
-    status: "applied",
-    notes: [],
-    appliedAt: "2026-06-11T14:22:00Z"
-  }
-];
+// Seeding Removed
 
 // Helper to determine if Supabase is connected and ready
 function isSupabaseConfigured(): boolean {
@@ -218,7 +175,7 @@ function initLocalDB() {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
   if (!fs.existsSync(APPLICANTS_FILE)) {
-    fs.writeFileSync(APPLICANTS_FILE, JSON.stringify(INITIAL_APPLICANTS, null, 2), "utf-8");
+    fs.writeFileSync(APPLICANTS_FILE, JSON.stringify([], null, 2), "utf-8");
   }
 }
 
@@ -228,7 +185,7 @@ function getLocalApplicants(): Applicant[] {
     const data = fs.readFileSync(APPLICANTS_FILE, "utf-8");
     return JSON.parse(data);
   } catch (err) {
-    return INITIAL_APPLICANTS;
+    return [];
   }
 }
 
@@ -241,64 +198,6 @@ function saveLocalApplicants(applicants: Applicant[]) {
   }
 }
 
-// Seeding logic to help initialize Supabase
-export async function seedSupabaseIfNeeded() {
-  if (!isSupabaseConfigured()) return;
-  try {
-    // Check if jobs are empty
-    const { count, error } = await supabase.from("jobs").select("*", { count: "exact", head: true });
-    if (error) throw error;
-
-    if (count === 0) {
-      console.log("Seeding Supabase jobs table...");
-      const dbJobs = CORPORATE_JOBS.map(job => ({
-        id: job.id,
-        title: job.title,
-        department: job.department,
-        location: job.location,
-        type: job.type,
-        experience_required: job.experienceRequired,
-        description: job.description,
-        salary_range: job.salaryRange || "",
-        status: job.status,
-      }));
-      await supabase.from("jobs").insert(dbJobs);
-
-      // Seed initial applicants & notes
-      console.log("Seeding Supabase applicants and notes table...");
-      for (const app of INITIAL_APPLICANTS) {
-        const dbApp = {
-          id: app.id,
-          name: app.name,
-          email: app.email,
-          phone: app.phone,
-          position_id: app.positionId,
-          position_title: app.positionTitle,
-          experience: app.experience,
-          linkedin: app.linkedin || "",
-          portfolio: app.portfolio || "",
-          resume_url: app.resumeUrl || "",
-          cover_letter: app.coverLetter,
-          notice_period: app.noticePeriod,
-          status: app.status,
-          applied_at: app.appliedAt
-        };
-        await supabase.from("applicants").insert(dbApp);
-
-        for (const note of app.notes) {
-          await supabase.from("notes").insert({
-            id: note.id,
-            applicant_id: app.id,
-            text: note.text,
-            created_at: note.createdAt
-          });
-        }
-      }
-    }
-  } catch (err) {
-    console.error("Failed to seed Supabase database:", err);
-  }
-}
 
 // --- Public Access Methods ---
 
@@ -349,14 +248,13 @@ export async function getApplicants(): Promise<Applicant[]> {
         name: app.name,
         email: app.email,
         phone: app.phone,
-        positionId: app.position_id,
         positionTitle: app.position_title,
-        experience: app.experience,
-        linkedin: app.linkedin,
-        portfolio: app.portfolio,
+        age: app.age,
+        nationality: app.nationality,
+        expectedSalary: app.expected_salary,
+        availability: app.availability,
+        passType: app.pass_type,
         resumeUrl: app.resume_url,
-        coverLetter: app.cover_letter,
-        noticePeriod: app.notice_period,
         status: app.status,
         notes: notesForApp,
         appliedAt: app.applied_at
@@ -368,9 +266,12 @@ export async function getApplicants(): Promise<Applicant[]> {
   }
 }
 
-export async function addApplicant(newApplicant: Omit<Applicant, "id" | "status" | "notes" | "appliedAt" | "positionTitle"> & { customPosition?: string }): Promise<Applicant> {
-  const position = getJobById(newApplicant.positionId);
+export async function addApplicant(newApplicant: Omit<Applicant, "id" | "status" | "notes" | "appliedAt" | "positionTitle"> & { customPosition?: string, positionId?: string }): Promise<Applicant> {
+  const position = newApplicant.positionId ? getJobById(newApplicant.positionId) : undefined;
+  
+  // If customPosition is provided, use it. Otherwise, fallback to the matched job title or "General Position"
   const positionTitle = newApplicant.customPosition || (position ? position.title : "General Position");
+  
   const id = `app-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   const appliedAt = new Date().toISOString();
 
@@ -392,18 +293,17 @@ export async function addApplicant(newApplicant: Omit<Applicant, "id" | "status"
 
   try {
     const { error } = await supabase.from("applicants").insert({
-      id,
-      name: newApplicant.name,
-      email: newApplicant.email,
-      phone: newApplicant.phone,
-      position_id: newApplicant.positionId,
-      position_title: positionTitle,
-      experience: newApplicant.experience,
-      linkedin: newApplicant.linkedin || "",
-      portfolio: newApplicant.portfolio || "",
-      resume_url: newApplicant.resumeUrl || "",
-      cover_letter: newApplicant.coverLetter,
-      notice_period: newApplicant.noticePeriod,
+      id: applicant.id,
+      name: applicant.name,
+      email: applicant.email,
+      phone: applicant.phone,
+      age: applicant.age,
+      nationality: applicant.nationality,
+      position_title: applicant.positionTitle,
+      expected_salary: applicant.expectedSalary,
+      availability: applicant.availability,
+      pass_type: applicant.passType,
+      resume_url: applicant.resumeUrl,
       status: "applied",
       applied_at: appliedAt
     });
@@ -411,11 +311,8 @@ export async function addApplicant(newApplicant: Omit<Applicant, "id" | "status"
     if (error) throw error;
     return applicant;
   } catch (err) {
-    console.error("Failed to insert into Supabase, saving locally:", err);
-    const applicants = getLocalApplicants();
-    applicants.unshift(applicant);
-    saveLocalApplicants(applicants);
-    return applicant;
+    console.error("Failed to insert into Supabase:", err);
+    throw err;
   }
 }
 
