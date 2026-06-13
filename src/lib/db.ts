@@ -68,7 +68,51 @@ function isSupabaseConfigured(): boolean {
   return !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 }
 
-// --- Public Access Methods ---
+export async function updateJob(id: string, updates: Partial<JobPosition>): Promise<JobPosition | null> {
+  if (!isSupabaseConfigured()) return null;
+
+  try {
+    const { data, error } = await supabase
+      .from("jobs")
+      .update({
+        title: updates.title,
+        department: updates.department,
+        location: updates.location,
+        description: updates.description,
+        salary_range: updates.salaryRange || null,
+        status: updates.status
+      })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    console.error("Failed to update job in Supabase:", err);
+    return null;
+  }
+}
+
+export async function deleteJob(id: string): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
+
+  try {
+    const { error } = await supabase
+      .from("jobs")
+      .update({ 
+        status: "closed", 
+        deleted_at: new Date().toISOString() 
+      })
+      .eq("id", id);
+
+    if (error) throw error;
+    return true;
+  } catch (err) {
+    console.error("Failed to soft-delete job in Supabase:", err);
+    return false;
+  }
+}
 
 export async function getJobs(): Promise<JobPosition[]> {
   if (!isSupabaseConfigured()) {
@@ -79,7 +123,8 @@ export async function getJobs(): Promise<JobPosition[]> {
     const { data, error } = await supabase
       .from("jobs")
       .select("*")
-      .eq("status", "active");
+      .eq("status", "active")
+      .is("deleted_at", null);
 
     if (error) throw error;
     return data || [];
@@ -239,6 +284,29 @@ export async function updateApplicantStatus(id: string, status: Applicant["statu
     return false;
   }
 }
+
+export async function deleteApplicant(id: string): Promise<boolean> {
+  if (!isSupabaseConfigured()) {
+    const applicants = getLocalApplicants();
+    const newApplicants = applicants.filter(a => a.id !== id);
+    saveLocalApplicants(newApplicants);
+    return true;
+  }
+
+  try {
+    const { error } = await supabase
+      .from("applicants")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
+    return true;
+  } catch (err) {
+    console.error("Failed to delete applicant from Supabase:", err);
+    return false;
+  }
+}
+
 
 export async function addApplicantNote(id: string, noteText: string): Promise<RecruiterNote | null> {
   const noteId = `note-${Date.now()}`;
