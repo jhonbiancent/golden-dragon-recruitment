@@ -12,15 +12,17 @@ import {
   Sparkles,
   ArrowRight,
   Layers,
-  ArrowUpRight
+  ArrowUpRight,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
+// Removed import { getJobs } from "@/lib/db";
 
 interface JobPosition {
   id: string;
   title: string;
   department: string;
   location: string;
-  experienceRequired: string;
   description: string;
   salaryRange?: string;
   status: "active" | "closed";
@@ -33,6 +35,13 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDept, setSelectedDept] = useState("All");
   
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const JOBS_PER_PAGE = 10;
+  
+  // Loading State
+  const [loading, setLoading] = useState(true);
+
   // Form State
   const [formData, setFormData] = useState({
     name: "",
@@ -53,110 +62,26 @@ export default function Home() {
 
   // Load jobs on mount
   useEffect(() => {
-    // We can fetch from API or hardcode the list for immediate load
-    const mockJobsList: JobPosition[] = [
-      {
-        id: "hr-partner",
-        title: "HR Business Partner",
-        department: "Administrative",
-        location: "Singapore",
-        experienceRequired: "4+ years",
-        description: "Join our HR division to manage corporate talent strategy, employee relations, onboarding frameworks, and organizational health. You will partner with business unit heads to direct hiring strategies.",
-        status: "active",
-      },
-      {
-        id: "fin-analyst",
-        title: "Senior Financial Analyst",
-        department: "Administrative",
-        location: "Singapore",
-        experienceRequired: "5+ years",
-        description: "Seeking a Senior Analyst to direct financial modeling, budgeting, and monthly auditing reports. Experience with enterprise ERP systems and financial forecasting models is required.",
-        status: "active",
-      },
-      {
-        id: "growth-mkt",
-        title: "Growth Marketing Manager",
-        department: "Sales",
-        location: "Singapore",
-        experienceRequired: "3+ years",
-        description: "Lead user acquisition and campaign management across PPC, social, and SEO channels. You will monitor metrics, run A/B testing, and collaborate with creative designers.",
-        status: "active",
-      },
-      {
-        id: "ops-coord",
-        title: "Operations Coordinator",
-        department: "General Operations",
-        location: "Singapore",
-        experienceRequired: "2+ years",
-        description: "Provide administrative, logistial, and office management support. You will manage scheduling, vendor relationships, facility maintenance, and assist on corporate operational tasks.",
-        status: "active",
-      },
-      {
-        id: "sales-exec",
-        title: "Corporate Account Executive",
-        department: "Sales",
-        location: "Singapore",
-        experienceRequired: "3+ years",
-        description: "Manage client acquisitions, close B2B enterprise deals, and run software demonstrations. Must have strong verbal communication skills and a track record of meeting revenue targets.",
-        status: "active",
-      },
-      {
-        id: "clean-1",
-        title: "Cleaning Specialist",
-        department: "General Operations",
-        location: "Singapore",
-        experienceRequired: "1+ years",
-        description: "Maintain cleanliness of our facilities, ensuring a safe and hygienic environment for all staff and visitors.",
-        status: "active",
-      },
-      {
-        id: "drive-1",
-        title: "Driver / Chauffeur",
-        department: "General Operations",
-        location: "Singapore",
-        experienceRequired: "2+ years",
-        description: "Provide safe and timely transportation for staff and guests. Maintaining vehicles and following traffic safety regulations is required.",
-        status: "active",
-      },
-      {
-        id: "food-1",
-        title: "Food Service Worker",
-        department: "General Operations",
-        location: "Singapore",
-        experienceRequired: "1+ years",
-        description: "Prepare and serve high-quality food and beverages in our office cafeterias, ensuring hygiene standards are met.",
-        status: "active",
-      },
-      {
-        id: "gen-1",
-        title: "Production Operator",
-        department: "General Operations",
-        location: "Singapore",
-        experienceRequired: "1+ years",
-        description: "Operate production machinery, monitor quality control, and ensure efficient workflow on the production line.",
-        status: "active",
-      },
-      {
-        id: "health-1",
-        title: "Wellness Coordinator",
-        department: "General Operations",
-        location: "Singapore",
-        experienceRequired: "2+ years",
-        description: "Promote employee health and well-being through programs, workshops, and wellness initiatives.",
-        status: "active",
-      },
-      {
-        id: "sec-1",
-        title: "Security Guard",
-        department: "General Operations",
-        location: "Singapore",
-        experienceRequired: "1+ years",
-        description: "Monitor and patrol facility, ensuring safety of personnel, assets, and premises.",
-        status: "active",
+    async function loadJobs() {
+      setLoading(true);
+      try {
+        const response = await fetch("/api/jobs");
+        if (!response.ok) throw new Error("Failed to fetch");
+        const data = await response.json();
+        setJobs(data.jobs);
+      } catch (err) {
+        console.error("Error loading jobs:", err);
+      } finally {
+        setLoading(false);
       }
-    ];
-    setJobs(mockJobsList);
+    }
+    loadJobs();
   }, []);
+
+  // Reset page when search or department changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedDept]);
 
   const departments = ["All", ...Array.from(new Set(jobs.map(j => j.department)))];
 
@@ -167,6 +92,12 @@ export default function Home() {
     return matchesSearch && matchesDept;
   });
 
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredJobs.length / JOBS_PER_PAGE);
+  const indexOfLastJob = currentPage * JOBS_PER_PAGE;
+  const indexOfFirstJob = indexOfLastJob - JOBS_PER_PAGE;
+  const currentJobs = filteredJobs.slice(indexOfFirstJob, indexOfLastJob);
+
   const handleOpenApply = (job: JobPosition) => {
     setSelectedJob(job);
     setIsModalOpen(true);
@@ -175,13 +106,12 @@ export default function Home() {
     setFormData(prev => ({ ...prev, customPosition: "" }));
   };
 
-  const handleOpenGeneralApply = () => {
+  const handleOpenGeneralApply = async () => {
     setSelectedJob({
       id: "general",
       title: "General Application",
       department: "General",
       location: "Remote / Multiple",
-      experienceRequired: "Any",
       description: "Submit your profile for future opportunities that match your skills.",
       status: "active",
     });
@@ -350,48 +280,86 @@ export default function Home() {
         </div>
 
         {/* Jobs Grid */}
-        {filteredJobs.length > 0 ? (
+        {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredJobs.map((job) => (
-              <div 
-                key={job.id} 
-                className="glass-card glass-card-hover rounded-2xl p-6 flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-start justify-between mb-4">
-                    <span className="inline-flex items-center rounded-lg bg-gold-500/10 px-2.5 py-1 text-xs font-semibold text-gold-400 border border-gold-500/20">
-                      {job.department}
-                    </span>
-                  </div>
-
-                  <h3 className="text-xl font-bold text-slate-100 hover:text-gold-400 transition-colors cursor-pointer mb-2">
-                    {job.title}
-                  </h3>
-
-                  <p className="text-sm text-slate-400 line-clamp-3 mb-6 leading-relaxed">
-                    {job.description}
-                  </p>
-                </div>
-
-                <div className="border-t border-slate-800/80 pt-4 mt-auto">
-                  <div className="flex items-center justify-between mb-4 text-xs text-slate-400">
-                    <span className="flex items-center">
-                      <MapPin className="h-3.5 w-3.5 mr-1 text-slate-500" />
-                      {job.location}
-                    </span>
-                  </div>
-
-                  <button
-                    onClick={() => handleOpenApply(job)}
-                    className="w-full py-2.5 px-4 rounded-xl bg-linear-to-r from-gold-600 to-gold-700 hover:from-gold-500 hover:to-gold-600 text-white font-medium text-sm transition-all shadow-md hover:shadow-lg hover:shadow-gold-500/15 flex items-center justify-center space-x-2"
-                  >
-                    <span>Apply Now</span>
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
-                </div>
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="glass-card rounded-2xl p-6 h-64 animate-pulse">
+                <div className="h-4 bg-slate-800 rounded w-1/4 mb-4"></div>
+                <div className="h-6 bg-slate-800 rounded w-3/4 mb-2"></div>
+                <div className="h-4 bg-slate-800 rounded w-full mb-2"></div>
+                <div className="h-4 bg-slate-800 rounded w-2/3"></div>
               </div>
             ))}
           </div>
+        ) : filteredJobs.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {currentJobs.map((job) => (
+                <div 
+                  key={job.id} 
+                  className="glass-card glass-card-hover rounded-2xl p-6 flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-start justify-between mb-4">
+                      <span className="inline-flex items-center rounded-lg bg-gold-500/10 px-2.5 py-1 text-xs font-semibold text-gold-400 border border-gold-500/20">
+                        {job.department}
+                      </span>
+                    </div>
+
+                    <h3 className="text-xl font-bold text-slate-100 hover:text-gold-400 transition-colors cursor-pointer mb-2">
+                      {job.title}
+                    </h3>
+
+                    <p className="text-sm text-slate-400 line-clamp-3 mb-6 leading-relaxed">
+                      {job.description}
+                    </p>
+                  </div>
+
+                  <div className="border-t border-slate-800/80 pt-4 mt-auto">
+                    <div className="flex items-center justify-between mb-4 text-xs text-slate-400">
+                      <span className="flex items-center">
+                        <MapPin className="h-3.5 w-3.5 mr-1 text-slate-500" />
+                        {job.location}
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => handleOpenApply(job)}
+                      className="w-full py-2.5 px-4 rounded-xl bg-linear-to-r from-gold-600 to-gold-700 hover:from-gold-500 hover:to-gold-600 text-white font-medium text-sm transition-all shadow-md hover:shadow-lg hover:shadow-gold-500/15 flex items-center justify-center space-x-2"
+                    >
+                      <span>Apply Now</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center space-x-4 mt-12">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 disabled:opacity-50 text-sm font-medium hover:border-slate-600 transition-colors flex items-center gap-2"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </button>
+                <span className="text-sm text-slate-400">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 disabled:opacity-50 text-sm font-medium hover:border-slate-600 transition-colors flex items-center gap-2"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="text-center py-16 glass-card rounded-2xl border border-dashed border-slate-800">
             <Briefcase className="h-12 w-12 text-slate-600 mx-auto mb-4" />

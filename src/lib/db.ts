@@ -1,6 +1,6 @@
-import fs from "fs";
-import path from "path";
+import "server-only";
 import { supabase } from "./supabaseClient";
+import { getLocalApplicants, saveLocalApplicants } from "./server-db";
 
 export interface RecruiterNote {
   id: string;
@@ -33,108 +33,6 @@ export interface JobPosition {
   salaryRange?: string;
   status: "active" | "closed";
 }
-
-const DATA_DIR = path.join(process.cwd(), "data");
-const APPLICANTS_FILE = path.join(DATA_DIR, "applicants.json");
-
-const CORPORATE_JOBS: JobPosition[] = [
-  {
-    id: "sr-frontend",
-    title: "Senior Frontend Engineer",
-    department: "Technical",
-    location: "Singapore",
-    description: "We are looking for a Senior Frontend Engineer to build beautiful, responsive web applications using React, Next.js, and modern CSS/Tailwind. You will design, develop, and lead frontend architecture.",
-    status: "active",
-  },
-  {
-    id: "hr-partner",
-    title: "HR Business Partner",
-    department: "Administrative",
-    location: "Singapore",
-    description: "Join our HR division to manage corporate talent strategy, employee relations, onboarding frameworks, and organizational health. You will partner with business unit heads to direct hiring strategies.",
-    status: "active",
-  },
-  {
-    id: "fin-analyst",
-    title: "Senior Financial Analyst",
-    department: "Administrative",
-    location: "Singapore",
-    description: "Seeking a Senior Analyst to direct financial modeling, budgeting, and monthly auditing reports. Experience with enterprise ERP systems and financial forecasting models is required.",
-    status: "active",
-  },
-  {
-    id: "growth-mkt",
-    title: "Growth Marketing Manager",
-    department: "Sales",
-    location: "Singapore",
-    description: "Lead user acquisition and campaign management across PPC, social, and SEO channels. You will monitor metrics, run A/B testing, and collaborate with creative designers.",
-    status: "active",
-  },
-  {
-    id: "ops-coord",
-    title: "Operations Coordinator",
-    department: "General Operations",
-    location: "Singapore",
-    description: "Provide administrative, logistial, and office management support. You will manage scheduling, vendor relationships, facility maintenance, and assist on corporate operational tasks.",
-    status: "active",
-  },
-  {
-    id: "sales-exec",
-    title: "Corporate Account Executive",
-    department: "Sales",
-    location: "Singapore",
-    description: "Manage client acquisitions, close B2B enterprise deals, and run software demonstrations. Must have strong verbal communication skills and a track record of meeting revenue targets.",
-    status: "active",
-  },
-  {
-    id: "clean-1",
-    title: "Cleaning Specialist",
-    department: "General Operations",
-    location: "Singapore",
-    description: "Maintain cleanliness of our facilities, ensuring a safe and hygienic environment for all staff and visitors.",
-    status: "active",
-  },
-  {
-    id: "drive-1",
-    title: "Driver / Chauffeur",
-    department: "General Operations",
-    location: "Singapore",
-    description: "Provide safe and timely transportation for staff and guests. Maintaining vehicles and following traffic safety regulations is required.",
-    status: "active",
-  },
-  {
-    id: "food-1",
-    title: "Food Service Worker",
-    department: "General Operations",
-    location: "Singapore",
-    description: "Prepare and serve high-quality food and beverages in our office cafeterias, ensuring hygiene standards are met.",
-    status: "active",
-  },
-  {
-    id: "gen-1",
-    title: "Production Operator",
-    department: "General Operations",
-    location: "Singapore",
-    description: "Operate production machinery, monitor quality control, and ensure efficient workflow on the production line.",
-    status: "active",
-  },
-  {
-    id: "health-1",
-    title: "Wellness Coordinator",
-    department: "General Operations",
-    location: "Singapore",
-    description: "Promote employee health and well-being through programs, workshops, and wellness initiatives.",
-    status: "active",
-  },
-  {
-    id: "sec-1",
-    title: "Security Guard",
-    department: "General Operations",
-    location: "Singapore",
-    description: "Monitor and patrol facility, ensuring safety of personnel, assets, and premises.",
-    status: "active",
-  }
-];
 
 export async function addJob(newJob: Omit<JobPosition, "id" | "status">): Promise<JobPosition | null> {
   const id = newJob.title.toLowerCase().replace(/\s+/g, '-');
@@ -170,46 +68,45 @@ function isSupabaseConfigured(): boolean {
   return !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 }
 
-// Local File Fallback System
-function initLocalDB() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-  if (!fs.existsSync(APPLICANTS_FILE)) {
-    fs.writeFileSync(APPLICANTS_FILE, JSON.stringify([], null, 2), "utf-8");
-  }
-}
+// --- Public Access Methods ---
 
-function getLocalApplicants(): Applicant[] {
-  initLocalDB();
+export async function getJobs(): Promise<JobPosition[]> {
+  if (!isSupabaseConfigured()) {
+    return [];
+  }
+
   try {
-    const data = fs.readFileSync(APPLICANTS_FILE, "utf-8");
-    return JSON.parse(data);
+    const { data, error } = await supabase
+      .from("jobs")
+      .select("*")
+      .eq("status", "active");
+
+    if (error) throw error;
+    return data || [];
   } catch (err) {
+    console.error("Failed to fetch jobs from Supabase:", err);
     return [];
   }
 }
 
-function saveLocalApplicants(applicants: Applicant[]) {
-  initLocalDB();
-  try {
-    fs.writeFileSync(APPLICANTS_FILE, JSON.stringify(applicants, null, 2), "utf-8");
-  } catch (err) {
-    console.error("Failed to write local DB:", err);
+export async function getJobById(id: string): Promise<JobPosition | undefined> {
+  if (!isSupabaseConfigured()) {
+    return undefined;
   }
-}
 
+  try {
+    const { data, error } = await supabase
+      .from("jobs")
+      .select("*")
+      .eq("id", id)
+      .single();
 
-// --- Public Access Methods ---
-
-export function getJobs(): JobPosition[] {
-  // We keep corporate jobs defined locally as a static list for immediate render,
-  // but can read them from Supabase if needed. We return static list to prevent page loading lags.
-  return CORPORATE_JOBS;
-}
-
-export function getJobById(id: string): JobPosition | undefined {
-  return CORPORATE_JOBS.find(j => j.id === id);
+    if (error) throw error;
+    return data || undefined;
+  } catch (err) {
+    console.error("Failed to fetch job by ID from Supabase:", err);
+    return undefined;
+  }
 }
 
 export async function getApplicants(): Promise<Applicant[]> {
@@ -268,7 +165,7 @@ export async function getApplicants(): Promise<Applicant[]> {
 }
 
 export async function addApplicant(newApplicant: Omit<Applicant, "id" | "status" | "notes" | "appliedAt" | "positionTitle"> & { customPosition?: string, positionId?: string }): Promise<Applicant> {
-  const position = newApplicant.positionId ? getJobById(newApplicant.positionId) : undefined;
+  const position = newApplicant.positionId ? await getJobById(newApplicant.positionId) : undefined;
   
   // If customPosition is provided, use it. Otherwise, fallback to the matched job title or "General Position"
   const positionTitle = newApplicant.customPosition || (position ? position.title : "General Position");
@@ -378,3 +275,4 @@ export async function addApplicantNote(id: string, noteText: string): Promise<Re
     return null;
   }
 }
+

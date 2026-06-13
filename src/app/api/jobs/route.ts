@@ -1,5 +1,15 @@
 import { NextResponse } from "next/server";
-import { addJob } from "@/lib/db";
+import { getJobs, addJob } from "@/lib/db";
+
+export async function GET() {
+  try {
+    const jobs = await getJobs();
+    return NextResponse.json({ jobs });
+  } catch (error: any) {
+    console.error("API Error fetching jobs:", error);
+    return NextResponse.json({ error: "Failed to fetch jobs" }, { status: 500 });
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -19,7 +29,7 @@ export async function POST(request: Request) {
     });
 
     if (!job) {
-      return NextResponse.json({ error: "Failed to create job" }, { status: 500 });
+      throw new Error("Failed to create job");
     }
 
     return NextResponse.json({ success: true, job }, { status: 201 });
