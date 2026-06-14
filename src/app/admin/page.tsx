@@ -23,8 +23,10 @@ import {
   Trash2,
   Edit2,
   AlertTriangle,
-  Download
+  Download,
+  UserCog
 } from "lucide-react";
+import AccountsTab from "@/components/admin/AccountsTab";
 
 interface RecruiterNote {
   id: string;
@@ -61,9 +63,10 @@ interface JobPosition {
 }
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'applicants' | 'jobs'>('applicants');
+  const [activeTab, setActiveTab] = useState<'applicants' | 'jobs' | 'accounts'>('applicants');
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [jobs, setJobs] = useState<JobPosition[]>([]);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -183,14 +186,17 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [appRes, jobsRes] = await Promise.all([
+      const [appRes, jobsRes, meRes] = await Promise.all([
         fetch("/api/applicants"),
-        fetch("/api/jobs?t=" + Date.now())
+        fetch("/api/jobs?t=" + Date.now()),
+        fetch("/api/me")
       ]);
       const appData = await appRes.json();
       const jobsData = await jobsRes.json();
+      const meData = await meRes.json();
       setApplicants(appData.applicants || []);
       setJobs(jobsData.jobs || []);
+      setUserRole(meData.role || null);
     } catch (error) {
       console.error("Failed to load data:", error);
     } finally {
@@ -361,19 +367,27 @@ export default function AdminDashboard() {
       <main className="grow max-w-7xl w-full mx-auto px-6 py-10 space-y-8">
         
         {/* Tabs */}
-        <div className="flex space-x-4 border-b border-slate-800">
+        <div className="flex border-b border-slate-800">
           <button 
             onClick={() => { setActiveTab('applicants'); setCurrentPage(1); }}
-            className={`pb-3 text-sm font-bold ${activeTab === 'applicants' ? 'text-gold-400 border-b-2 border-gold-400' : 'text-slate-500'}`}
+            className={`pb-3 px-6 text-sm font-bold border-r border-slate-800 ${activeTab === 'applicants' ? 'text-gold-400 border-b-2 border-b-gold-400' : 'text-slate-500'}`}
           >
             Applicants
           </button>
           <button 
             onClick={() => { setActiveTab('jobs'); setCurrentPage(1); }}
-            className={`pb-3 text-sm font-bold ${activeTab === 'jobs' ? 'text-gold-400 border-b-2 border-gold-400' : 'text-slate-500'}`}
+            className={`pb-3 px-6 text-sm font-bold border-r border-slate-800 ${activeTab === 'jobs' ? 'text-gold-400 border-b-2 border-b-gold-400' : 'text-slate-500'}`}
           >
             Jobs
           </button>
+          {userRole === 'admin' && (
+            <button 
+                onClick={() => { setActiveTab('accounts'); setCurrentPage(1); }}
+                className={`pb-3 px-6 text-sm font-bold ${activeTab === 'accounts' ? 'text-gold-400 border-b-2 border-b-gold-400' : 'text-slate-500'}`}
+            >
+                Accounts
+            </button>
+          )}
         </div>
 
         {activeTab === 'applicants' && (
@@ -410,7 +424,7 @@ export default function AdminDashboard() {
               </div>
             </section>
 
-            {/* Filter and Export */}
+            {/* Filter */}
             <section className="glass-card rounded-2xl p-6 shadow-xl">
               <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
                 <div className="relative w-full md:max-w-md flex-1">
@@ -486,7 +500,7 @@ export default function AdminDashboard() {
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="border-b border-slate-800 bg-slate-900/40 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                          <th className="py-4 px-6">NO.</th>
+                          <th className="py-4 px-6">#</th>
                           <th className="py-4 px-6">Applicant Name</th>
                           <th className="py-4 px-6">Position</th>
                           <th className="py-4 px-6">Applied Date</th>
@@ -558,7 +572,7 @@ export default function AdminDashboard() {
                 <h3 className="text-lg font-bold text-white">Available Jobs</h3>
                 <button 
                   onClick={() => { setIsJobModalOpen(true); setEditingJob(null); setJobFormData({ title: "", department: "", location: "", description: "", salaryRange: "" }); }}
-                  className="px-4 py-2.5 rounded-xl bg-gold-600 hover:bg-gold-500 text-white font-semibold text-sm transition-all flex items-center space-x-2"
+                  className="px-4 py-2.5 rounded-xl bg-gold-600 hover:bg-gold-500 hover:cursor-pointer text-white font-semibold text-sm transition-all flex items-center space-x-2"
                 >
                   <Plus className="h-4 w-4" />
                   <span>Create New Job</span>
@@ -582,8 +596,8 @@ export default function AdminDashboard() {
                         <td className="py-4.5 px-6 text-slate-300">{job.department}</td>
                         <td className="py-4.5 px-6 text-slate-300">{job.location}</td>
                         <td className="py-4.5 px-6 text-right">
-                          <button onClick={() => editJob(job)} className="p-1.5 hover:text-gold-400"><Edit2 className="h-4 w-4" /></button>
-                          <button onClick={() => setDeleteConfirmation({type: 'job', id: job.id})} className="p-1.5 hover:text-rose-400"><Trash2 className="h-4 w-4" /></button>
+                          <button onClick={() => editJob(job)} className="p-1.5 hover:text-gold-400 hover:cursor-pointer"><Edit2 className="h-4 w-4" /></button>
+                          <button onClick={() => setDeleteConfirmation({type: 'job', id: job.id})} className="p-1.5 hover:text-rose-400 hover:cursor-pointer"><Trash2 className="h-4 w-4" /></button>
                         </td>
                       </tr>
                     ))}
@@ -593,6 +607,8 @@ export default function AdminDashboard() {
           </section>
         )}
         
+        {activeTab === 'accounts' && userRole === 'admin' && <AccountsTab />}
+
         {/* Pagination Controls */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center space-x-4 py-4 border-t border-slate-800">
@@ -742,10 +758,7 @@ export default function AdminDashboard() {
                     <span className="text-slate-500 text-xs font-bold shrink-0 uppercase w-4.5">PSS</span>
                     <span>Pass Type: {selectedApplicant.passType}</span>
                   </div>
-                  <div className="flex items-center space-x-3 text-sm text-slate-300">
-                    <span className="text-slate-500 text-xs font-bold shrink-0 uppercase w-4.5">Ntc</span>
-                    <span>Notice Period: {selectedApplicant.noticePeriod}</span>
-                  </div>
+               
                 </div>
                 <div className="flex flex-wrap gap-2 pt-2">
                   {selectedApplicant.linkedin && (
