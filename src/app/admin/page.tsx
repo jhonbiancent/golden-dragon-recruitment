@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-  Users, 
-  UserCheck, 
-  FileText, 
-  X, 
-  Search, 
+import {
+  Users,
+  UserCheck,
+  FileText,
+  X,
+  Search,
   ExternalLink,
   Plus,
   TrendingUp,
@@ -18,13 +18,11 @@ import {
   ClipboardList,
   Layers,
   MapPin,
-  Clock,
   DollarSign,
   Trash2,
   Edit2,
   AlertTriangle,
   Download,
-  UserCog
 } from "lucide-react";
 import AccountsTab from "@/components/admin/AccountsTab";
 
@@ -55,150 +53,80 @@ interface Applicant {
   appliedAt: string;
 }
 
+interface JobCategory {
+  id: string;
+  name: string;
+  description: string;
+  location: string;
+}
+
 interface JobPosition {
   id: string;
+  category_id: string;
   position: string;
-  category: string;
-  location: string;
-  description: string;
   salaryRange?: string;
   status: "active" | "closed";
+  category?: { id: string; name: string; description: string; location: string };
 }
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'applicants' | 'jobs' | 'accounts'>('applicants');
+  const [activeTab, setActiveTab] = useState<"applicants" | "jobs" | "accounts">("applicants");
+  const [activeJobsTab, setActiveJobsTab] = useState<"positions" | "categories">("positions");
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [jobs, setJobs] = useState<JobPosition[]>([]);
+  const [categories, setCategories] = useState<JobCategory[]>([]);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [positionFilter, setPositionFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [noteText, setNoteText] = useState("");
   const [savingNote, setSavingNote] = useState(false);
   const [savingStatus, setSavingStatus] = useState(false);
+
+  // Modals & Forms
   const [isJobModalOpen, setIsJobModalOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showCategorySuccessModal, setShowCategorySuccessModal] = useState(false);
   const [editingJob, setEditingJob] = useState<JobPosition | null>(null);
-  const [deleteConfirmation, setDeleteConfirmation] = useState<{type: 'job' | 'applicant', id: string} | null>(null);
-  
-  // Pagination State
+  const [editingCategory, setEditingCategory] = useState<JobCategory | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    type: "job" | "applicant" | "category";
+    id: string;
+  } | null>(null);
+
+  const [jobFormData, setJobFormData] = useState({ categoryId: "", position: "", salaryRange: "" });
+  const [catFormData, setCatFormData] = useState({ name: "", description: "", location: "" });
+
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 50;
 
-  // Sorting State
-  const [sortConfig, setSortConfig] = useState<{ field: 'name' | 'positionTitle' | 'appliedAt', direction: 'asc' | 'desc' }>({ field: 'appliedAt', direction: 'desc' });
-
-  const [jobFormData, setJobFormData] = useState({
-    position: "",
-    category: "",
-    location: "",
-    description: "",
-    salaryRange: "",
-  });
-
-  const handleJobSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const url = `/api/jobs`;
-      const method = editingJob ? 'PATCH' : 'POST';
-      const body = editingJob ? { id: editingJob.id, ...jobFormData } : jobFormData;
-
-      const response = await fetch(url, {
-        method: method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      if (response.ok) {
-        setIsJobModalOpen(false);
-        setEditingJob(null);
-        setShowSuccessModal(true);
-        setJobFormData({
-          position: "",
-          category: "",
-          location: "",
-          description: "",
-          salaryRange: "",
-        });
-        await fetchData();
-        alert("Success: Data refreshed from server."); 
-      } else {
-        const errorData = await response.json();
-        alert(`Failed to save job: ${errorData.error}`);
-      }
-    } catch (error) {
-      console.error("Error saving job:", error);
-    }
-  };
-
-  const deleteJob = async (id: string) => {
-    try {
-      const response = await fetch("/api/jobs", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      if (response.ok) {
-        setDeleteConfirmation(null);
-        await fetchData();
-        alert("Success: Job deleted and data refreshed.");
-      }
-    } catch (error) {
-      console.error("Error deleting job:", error);
-    }
-  }
-
-  const deleteApplicant = async (id: string) => {
-    try {
-      const response = await fetch("/api/applicants", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      if (response.ok) {
-        setDeleteConfirmation(null);
-        setSelectedApplicant(null);
-        await fetchData();
-        alert("Success: Applicant deleted and data refreshed.");
-      }
-    } catch (error) {
-      console.error("Error deleting applicant:", error);
-    }
-  }
-
-  const confirmDelete = async () => {
-    if (!deleteConfirmation) return;
-    if (deleteConfirmation.type === 'job') await deleteJob(deleteConfirmation.id);
-    else await deleteApplicant(deleteConfirmation.id);
-  }
-
-  const editJob = (job: JobPosition) => {
-    setEditingJob(job);
-    setJobFormData({
-      position: job.position,
-      category: job.category,
-      location: job.location,
-      description: job.description,
-      salaryRange: job.salaryRange || "",
-    });
-    setIsJobModalOpen(true);
-  }
+  // Sorting
+  const [sortConfig, setSortConfig] = useState<{
+    field: "name" | "positionTitle" | "appliedAt";
+    direction: "asc" | "desc";
+  }>({ field: "appliedAt", direction: "desc" });
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [appRes, jobsRes, meRes] = await Promise.all([
+      const [appRes, jobsRes, meRes, catRes] = await Promise.all([
         fetch("/api/applicants"),
-        fetch("/api/jobs?t=" + Date.now()),
-        fetch("/api/me")
+        fetch("/api/jobs?type=positions&t=" + Date.now()),
+        fetch("/api/me"),
+        fetch("/api/jobs?type=categories&t=" + Date.now()),
       ]);
       const appData = await appRes.json();
       const jobsData = await jobsRes.json();
       const meData = await meRes.json();
+      const catData = await catRes.json();
       setApplicants(appData.applicants || []);
-      setJobs(jobsData.jobs || []);
+      setJobs(jobsData.data || []);
+      setCategories(catData.data || []);
       setUserRole(meData.role || null);
     } catch (error) {
       console.error("Failed to load data:", error);
@@ -216,18 +144,15 @@ export default function AdminDashboard() {
     try {
       const response = await fetch("/api/applicants", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status: newStatus }),
       });
-
       if (response.ok) {
-        setApplicants(prev => 
-          prev.map(app => app.id === id ? { ...app, status: newStatus } : app)
+        setApplicants((prev) =>
+          prev.map((app) => (app.id === id ? { ...app, status: newStatus } : app))
         );
-        if (selectedApplicant && selectedApplicant.id === id) {
-          setSelectedApplicant(prev => prev ? { ...prev, status: newStatus } : null);
+        if (selectedApplicant?.id === id) {
+          setSelectedApplicant((prev) => (prev ? { ...prev, status: newStatus } : null));
         }
       }
     } catch (error) {
@@ -240,28 +165,23 @@ export default function AdminDashboard() {
   const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!noteText.trim() || !selectedApplicant) return;
-
     setSavingNote(true);
     try {
       const response = await fetch("/api/applicants", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: selectedApplicant.id, note: noteText }),
       });
-
       if (response.ok) {
         const data = await response.json();
-        setApplicants(prev => 
-          prev.map(app => {
-            if (app.id === selectedApplicant.id) {
-              return { ...app, notes: [...app.notes, data.note] };
-            }
-            return app;
-          })
+        setApplicants((prev) =>
+          prev.map((app) =>
+            app.id === selectedApplicant.id
+              ? { ...app, notes: [...app.notes, data.note] }
+              : app
+          )
         );
-        setSelectedApplicant(prev => 
+        setSelectedApplicant((prev) =>
           prev ? { ...prev, notes: [...prev.notes, data.note] } : null
         );
         setNoteText("");
@@ -273,26 +193,112 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleJobSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const url = `/api/jobs`;
+    const method = editingJob ? "PATCH" : "POST";
+    const body = editingJob ? { id: editingJob.id, ...jobFormData } : jobFormData;
+    const response = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (response.ok) {
+      setIsJobModalOpen(false);
+      setEditingJob(null);
+      setJobFormData({ categoryId: "", position: "", salaryRange: "" });
+      await fetchData();
+      setShowSuccessModal(true);
+    } else {
+      alert("Failed to save position.");
+    }
+  };
+
+  const handleCategorySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const url = `/api/jobs`;
+    const method = editingCategory ? "PATCH" : "POST";
+    const body = editingCategory
+      ? { id: editingCategory.id, ...catFormData, type: "category" }
+      : { ...catFormData, type: "category" };
+    const response = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (response.ok) {
+      setIsCategoryModalOpen(false);
+      setEditingCategory(null);
+      setCatFormData({ name: "", description: "", location: "" });
+      await fetchData();
+      setShowCategorySuccessModal(true);
+    } else {
+      alert("Failed to save category.");
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirmation) return;
+    if (deleteConfirmation.type === "applicant") {
+      const response = await fetch("/api/applicants", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: deleteConfirmation.id }),
+      });
+      if (response.ok) {
+        setDeleteConfirmation(null);
+        setSelectedApplicant(null);
+        await fetchData();
+      } else {
+        alert("Failed to delete applicant.");
+      }
+    } else {
+      const response = await fetch("/api/jobs", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: deleteConfirmation.id, type: deleteConfirmation.type }),
+      });
+      if (response.ok) {
+        setDeleteConfirmation(null);
+        await fetchData();
+      } else {
+        alert("Failed to delete.");
+      }
+    }
+  };
+
+  const editJob = (job: JobPosition) => {
+    setEditingJob(job);
+    setJobFormData({
+      position: job.position,
+      categoryId: job.category_id,
+      salaryRange: job.salaryRange || "",
+    });
+    setIsJobModalOpen(true);
+  };
+
+  const editCategory = (cat: JobCategory) => {
+    setEditingCategory(cat);
+    setCatFormData({ name: cat.name, description: cat.description, location: cat.location });
+    setIsCategoryModalOpen(true);
+  };
+
   const downloadCSV = () => {
-    const headers = ["Name", "Email", "WhatsApp Number", "Gender", "Nationality", "Location", "Position", "Pass Type", "Status", "Applied At"];
-    const rows = applicants.map(app => [
-        `"${app.name}"`,
-        `"${app.email}"`,
-        `"${app.whatsapp_number}"`,
-        `"${app.gender}"`,
-        `"${app.nationality}"`,
-        `"${app.current_location}"`,
-        `"${app.positionTitle}"`,
-        `"${app.passType}"`,
-        `"${app.status}"`,
-        `"${app.appliedAt}"`
+    const headers = [
+      "Name", "Email", "WhatsApp Number", "Gender", "Nationality",
+      "Location", "Position", "Pass Type", "Status", "Applied At",
+    ];
+    const rows = applicants.map((app) => [
+      `"${app.name}"`, `"${app.email}"`, `"${app.whatsapp_number}"`,
+      `"${app.gender}"`, `"${app.nationality}"`, `"${app.current_location}"`,
+      `"${app.positionTitle}"`, `"${app.passType}"`, `"${app.status}"`, `"${app.appliedAt}"`,
     ]);
-    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const csvContent = [headers, ...rows].map((e) => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `applicants_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `applicants_${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
   };
 
@@ -304,13 +310,14 @@ export default function AdminDashboard() {
   };
 
   const totalCount = applicants.length;
-  const interviewingCount = applicants.filter(a => a.status === "interviewing").length;
-  const hiredCount = applicants.filter(a => a.status === "hired").length;
+  const interviewingCount = applicants.filter((a) => a.status === "interviewing").length;
+  const hiredCount = applicants.filter((a) => a.status === "hired").length;
 
-  const filteredApplicants = applicants.filter(app => {
-    const matchesSearch = app.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          app.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          app.positionTitle.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredApplicants = applicants.filter((app) => {
+    const matchesSearch =
+      app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.positionTitle.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || app.status === statusFilter;
     const matchesPosition = positionFilter === "all" || app.positionId === positionFilter;
     return matchesSearch && matchesStatus && matchesPosition;
@@ -319,37 +326,43 @@ export default function AdminDashboard() {
   const sortedApplicants = [...filteredApplicants].sort((a, b) => {
     let aValue: any = a[sortConfig.field];
     let bValue: any = b[sortConfig.field];
-
-    if (sortConfig.field === 'appliedAt') {
-      return sortConfig.direction === 'asc' 
+    if (sortConfig.field === "appliedAt") {
+      return sortConfig.direction === "asc"
         ? new Date(aValue).getTime() - new Date(bValue).getTime()
         : new Date(bValue).getTime() - new Date(aValue).getTime();
     }
-    
-    if (sortConfig.field === 'positionTitle') {
-        aValue = a.positionTitle.toLowerCase();
-        bValue = b.positionTitle.toLowerCase();
-    } else {
-        aValue = String(aValue).toLowerCase();
-        bValue = String(bValue).toLowerCase();
-    }
-
-    if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-    if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+    aValue = String(aValue).toLowerCase();
+    bValue = String(bValue).toLowerCase();
+    if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+    if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
     return 0;
   });
 
-  const totalPages = Math.ceil((activeTab === 'applicants' ? sortedApplicants.length : jobs.length) / ITEMS_PER_PAGE);
-  const indexOfLast = currentPage * ITEMS_PER_PAGE;
-  const indexOfFirst = indexOfLast - ITEMS_PER_PAGE;
-  const currentItems = activeTab === 'applicants' 
-    ? sortedApplicants.slice(indexOfFirst, indexOfLast)
-    : jobs.slice(indexOfFirst, indexOfLast);
+  const filteredJobs = jobs.filter((job) => {
+    const matchesSearch = job.position.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = categoryFilter === "all" || job.category_id === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
+
+  // Pagination targets per active view
+  const paginationSource =
+    activeTab === "applicants"
+      ? sortedApplicants
+      : activeTab === "jobs" && activeJobsTab === "positions"
+      ? filteredJobs
+      : activeTab === "jobs" && activeJobsTab === "categories"
+      ? categories
+      : [];
+
+  const totalPages = Math.ceil(paginationSource.length / ITEMS_PER_PAGE);
+  const indexOfFirst = (currentPage - 1) * ITEMS_PER_PAGE;
+  const indexOfLast = indexOfFirst + ITEMS_PER_PAGE;
+  const currentItems = paginationSource.slice(indexOfFirst, indexOfLast);
 
   return (
     <div className="min-h-screen bg-[#070b15] text-slate-100 flex flex-col font-sans">
-      
-      {/* Admin Header */}
+
+      {/* Header */}
       <header className="sticky top-0 z-40 w-full border-b border-slate-800 bg-[#070b15]/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -361,44 +374,39 @@ export default function AdminDashboard() {
               <span className="text-lg font-bold text-white mt-1">Recruiter Dashboard</span>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <a href="/" className="text-xs px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 font-medium transition-colors">
-              Candidate View
-            </a>
-          </div>
+          <a href="/" className="text-xs px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 font-medium transition-colors">
+            Candidate View
+          </a>
         </div>
       </header>
 
-      {/* Main Body */}
+      {/* Main */}
       <main className="grow max-w-7xl w-full mx-auto px-6 py-10 space-y-8">
-        
-        {/* Tabs */}
+
+        {/* Top-level Tabs */}
         <div className="flex border-b border-slate-800">
-          <button 
-            onClick={() => { setActiveTab('applicants'); setCurrentPage(1); }}
-            className={`pb-3 px-6 text-sm font-bold border-r border-slate-800 ${activeTab === 'applicants' ? 'text-gold-400 border-b-2 border-b-gold-400' : 'text-slate-500'}`}
-          >
-            Applicants
-          </button>
-          <button 
-            onClick={() => { setActiveTab('jobs'); setCurrentPage(1); }}
-            className={`pb-3 px-6 text-sm font-bold border-r border-slate-800 ${activeTab === 'jobs' ? 'text-gold-400 border-b-2 border-b-gold-400' : 'text-slate-500'}`}
-          >
-            Jobs
-          </button>
-          {userRole === 'admin' && (
-            <button 
-                onClick={() => { setActiveTab('accounts'); setCurrentPage(1); }}
-                className={`pb-3 px-6 text-sm font-bold border-r border-slate-800 ${activeTab === 'accounts' ? 'text-gold-400 border-b-2 border-b-gold-400' : 'text-slate-500'}`}
+          {(["applicants", "jobs"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => { setActiveTab(tab); setCurrentPage(1); }}
+              className={`pb-3 px-6 text-sm font-bold border-r border-slate-800 capitalize ${activeTab === tab ? "text-gold-400 border-b-2 border-b-gold-400" : "text-slate-500"}`}
             >
-                Accounts
+              {tab}
+            </button>
+          ))}
+          {userRole === "admin" && (
+            <button
+              onClick={() => { setActiveTab("accounts"); setCurrentPage(1); }}
+              className={`pb-3 px-6 text-sm font-bold border-r border-slate-800 ${activeTab === "accounts" ? "text-gold-400 border-b-2 border-b-gold-400" : "text-slate-500"}`}
+            >
+              Accounts
             </button>
           )}
         </div>
 
-        {activeTab === 'applicants' && (
+        {/* ── APPLICANTS TAB ── */}
+        {activeTab === "applicants" && (
           <>
-            {/* Stats Grid - Now responsive row */}
             <section className="flex flex-row flex-wrap gap-5">
               <div className="glass-card rounded-2xl p-5 flex items-center space-x-4 flex-1 min-w-50">
                 <div className="h-12 w-12 rounded-xl bg-gold-500/10 border border-gold-500/25 flex items-center justify-center text-gold-400">
@@ -418,7 +426,6 @@ export default function AdminDashboard() {
                   <span className="text-2xl font-extrabold text-white mt-0.5">{interviewingCount}</span>
                 </div>
               </div>
-              
               <div className="glass-card rounded-2xl p-5 flex items-center space-x-4 flex-1 min-w-50">
                 <div className="h-12 w-12 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-400">
                   <UserCheck className="h-6 w-6" />
@@ -430,7 +437,6 @@ export default function AdminDashboard() {
               </div>
             </section>
 
-            {/* Filter */}
             <section className="glass-card rounded-2xl p-6 shadow-xl">
               <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
                 <div className="relative w-full md:max-w-md flex-1">
@@ -443,25 +449,21 @@ export default function AdminDashboard() {
                     className="w-full bg-slate-900/60 border border-slate-800 rounded-xl pl-11 pr-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-gold-500"
                   />
                 </div>
-
                 <div className="flex items-center space-x-1.5 overflow-x-auto w-full md:w-auto p-2 bg-slate-950/80 border border-slate-800/80 rounded-xl">
-                  {/* Position Filter */}
                   <select
                     value={positionFilter}
                     onChange={(e) => setPositionFilter(e.target.value)}
                     className="bg-slate-900 border border-slate-700 text-xs px-2 py-1.5 rounded-lg text-slate-400"
                   >
                     <option value="all">All Positions</option>
-                    {jobs.map(job => (
-                        <option key={job.id} value={job.id}>{job.position}</option>
+                    {jobs.map((job) => (
+                      <option key={job.id} value={job.id}>{job.position}</option>
                     ))}
                   </select>
-
-                  {/* Status Filter */}
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="bg-slate-900 border border-slate-700 text-xs px-2 py-1.5 rounded-lg text-slate-400 capitalize"
+                    className="bg-slate-900 border border-slate-700 text-xs px-2 py-1.5 rounded-lg text-slate-400"
                   >
                     <option value="all">All Statuses</option>
                     <option value="applied">Applied</option>
@@ -469,14 +471,12 @@ export default function AdminDashboard() {
                     <option value="hired">Hired</option>
                     <option value="rejected">Rejected</option>
                   </select>
-
-                  {/* Sorting Controls */}
-                  <select 
-                    onChange={(e) => {
-                        const [field, direction] = e.target.value.split('-');
-                        setSortConfig({ field: field as any, direction: direction as any });
-                    }}
+                  <select
                     value={`${sortConfig.field}-${sortConfig.direction}`}
+                    onChange={(e) => {
+                      const [field, direction] = e.target.value.split("-");
+                      setSortConfig({ field: field as any, direction: direction as any });
+                    }}
                     className="bg-slate-900 border border-slate-700 text-xs px-2 py-1.5 rounded-lg text-slate-400"
                   >
                     <option value="appliedAt-desc">Date (Newest)</option>
@@ -486,8 +486,7 @@ export default function AdminDashboard() {
                     <option value="positionTitle-asc">Position (A-Z)</option>
                     <option value="positionTitle-desc">Position (Z-A)</option>
                   </select>
-
-                  <button 
+                  <button
                     onClick={downloadCSV}
                     className="px-3 py-1.5 rounded-lg bg-emerald-400 hover:bg-emerald-700 hover:cursor-pointer text-white text-xs font-semibold flex items-center space-x-1"
                   >
@@ -497,70 +496,57 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Applicant Table */}
               <div className="overflow-x-auto rounded-xl border border-slate-800/80 bg-slate-950/20">
                 {loading ? (
                   <div className="text-center py-12 text-slate-500">Loading applicant records...</div>
                 ) : sortedApplicants.length > 0 ? (
-                  <>
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="border-b border-slate-800 bg-slate-900/40 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                          <th className="py-4 px-6">#</th>
-                          <th className="py-4 px-6">Applicant Name</th>
-                          <th className="py-4 px-6">Position</th>
-                          <th className="py-4 px-6">Applied Date</th>
-                          <th className="py-4 px-6">Pass Type</th>
-                          <th className="py-4 px-6">Status</th>
-                          <th className="py-4 px-6 text-right">Action</th>
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-800 bg-slate-900/40 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                        <th className="py-4 px-6">#</th>
+                        <th className="py-4 px-6">Applicant Name</th>
+                        <th className="py-4 px-6">Position</th>
+                        <th className="py-4 px-6">Applied Date</th>
+                        <th className="py-4 px-6">Pass Type</th>
+                        <th className="py-4 px-6">Status</th>
+                        <th className="py-4 px-6 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60 text-sm">
+                      {(currentItems as Applicant[]).map((app, index) => (
+                        <tr
+                          key={app.id}
+                          className="hover:bg-slate-900/35 transition-colors cursor-pointer group"
+                          onClick={() => setSelectedApplicant(app)}
+                        >
+                          <td className="py-4.5 px-6 text-slate-500">{indexOfFirst + index + 1}</td>
+                          <td className="py-4.5 px-6">
+                            <div className="font-semibold text-slate-100 group-hover:text-gold-400 transition-colors">{app.name}</div>
+                            <div className="text-xs text-slate-500 mt-0.5">{app.email}</div>
+                          </td>
+                          <td className="py-4.5 px-6 text-slate-200 font-medium">{app.positionTitle}</td>
+                          <td className="py-4.5 px-6 text-slate-400 text-xs">
+                            {new Date(app.appliedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                          </td>
+                          <td className="py-4.5 px-6 text-slate-400 text-xs capitalize">{app.passType}</td>
+                          <td className="py-4.5 px-6">
+                            <span className={`inline-flex items-center rounded-lg px-2.5 py-0.5 text-xs font-semibold capitalize ${statusColors[app.status]}`}>
+                              {app.status}
+                            </span>
+                          </td>
+                          <td className="py-4.5 px-6 text-right" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              onClick={() => setSelectedApplicant(app)}
+                              className="inline-flex items-center space-x-1 py-1.5 px-3 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
+                            >
+                              <span>Review</span>
+                              <ChevronRight className="h-3 w-3" />
+                            </button>
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-800/60 text-sm">
-                        {currentItems.map((app: any, index: number) => (
-                          <tr 
-                            key={app.id} 
-                            className="hover:bg-slate-900/35 transition-colors cursor-pointer group"
-                            onClick={() => setSelectedApplicant(app)}
-                          >
-                            <td className="py-4.5 px-6 text-slate-500">{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
-                            <td className="py-4.5 px-6">
-                              <div className="font-semibold text-slate-100 group-hover:text-gold-400 transition-colors">
-                                {app.name}
-                              </div>
-                              <div className="text-xs text-slate-500 mt-0.5">{app.email}</div>
-                            </td>
-                            <td className="py-4.5 px-6">
-                              <div className="text-slate-200 font-medium">{app.positionTitle}</div>
-                            </td>
-                            <td className="py-4.5 px-6 text-slate-400 text-xs">
-                              {new Date(app.appliedAt).toLocaleDateString(undefined, {
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric"
-                              })}
-                            </td>
-                            <td className="py-4.5 px-6 text-slate-400 text-xs capitalize">
-                              {app.passType}
-                            </td>
-                            <td className="py-4.5 px-6">
-                              <span className={`inline-flex items-center rounded-lg px-2.5 py-0.5 text-xs font-semibold capitalize ${statusColors[app.status as Applicant['status']]}`}>
-                                {app.status}
-                              </span>
-                            </td>
-                            <td className="py-4.5 px-6 text-right" onClick={(e) => e.stopPropagation()}>
-                              <button
-                                onClick={() => setSelectedApplicant(app)}
-                                className="inline-flex items-center space-x-1 py-1.5 px-3 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
-                              >
-                                <span>Review</span>
-                                <ChevronRight className="h-3 w-3" />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </>
+                      ))}
+                    </tbody>
+                  </table>
                 ) : (
                   <div className="text-center py-16 text-slate-500">
                     <FileText className="h-10 w-10 text-slate-700 mx-auto mb-3" />
@@ -572,114 +558,248 @@ export default function AdminDashboard() {
           </>
         )}
 
-        {activeTab === 'jobs' && (
+        {/* ── JOBS TAB ── */}
+        {activeTab === "jobs" && (
           <section className="glass-card rounded-2xl p-6 shadow-xl">
-             <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-white">Available Jobs</h3>
-                <button 
-                  onClick={() => { setIsJobModalOpen(true); setEditingJob(null); setJobFormData({ position: "", category: "", location: "", description: "", salaryRange: "" }); }}
-                  className="px-4 py-2.5 rounded-xl bg-gold-600 hover:bg-gold-500 hover:cursor-pointer text-white font-semibold text-sm transition-all flex items-center space-x-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Create New Job</span>
-                </button>
-             </div>
-             
-             <div className="overflow-x-auto rounded-xl border border-slate-800/80 bg-slate-950/20">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-slate-800 bg-slate-900/40 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                      <th className="py-4 px-6">Job Title</th>
-                      <th className="py-4 px-6">Category</th>
-                      <th className="py-4 px-6">Location</th>
-                      <th className="py-4 px-6 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60 text-sm">
-                    {currentItems.map((job: any) => (
-                      <tr key={job.id} className="hover:bg-slate-900/35 transition-colors">
-                        <td className="py-4.5 px-6 font-semibold text-slate-100">{job.position}</td>
-                        <td className="py-4.5 px-6 text-slate-300">{job.category}</td>
-                        <td className="py-4.5 px-6 text-slate-300">{job.location}</td>
-                        <td className="py-4.5 px-6 text-right">
-                          <button onClick={() => editJob(job)} className="p-1.5 hover:text-gold-400 hover:cursor-pointer"><Edit2 className="h-4 w-4" /></button>
-                          <button onClick={() => setDeleteConfirmation({type: 'job', id: job.id})} className="p-1.5 hover:text-rose-400 hover:cursor-pointer"><Trash2 className="h-4 w-4" /></button>
-                        </td>
+            {/* Sub-tabs */}
+            <div className="flex border-b border-slate-800 mb-6 gap-4">
+              <button
+                onClick={() => { setActiveJobsTab("positions"); setCurrentPage(1); }}
+                className={`pb-3 text-sm font-bold ${activeJobsTab === "positions" ? "text-gold-400 border-b-2 border-gold-400" : "text-slate-500"}`}
+              >
+                Positions
+              </button>
+              <button
+                onClick={() => { setActiveJobsTab("categories"); setCurrentPage(1); }}
+                className={`pb-3 text-sm font-bold ${activeJobsTab === "categories" ? "text-gold-400 border-b-2 border-gold-400" : "text-slate-500"}`}
+              >
+                Categories
+              </button>
+            </div>
+
+            {activeJobsTab === "positions" ? (
+              <>
+                <div className="flex justify-between items-center mb-6">
+                  <div className="flex items-center gap-4">
+                    <h3 className="text-lg font-bold text-white">Positions</h3>
+                    <select
+                      value={categoryFilter}
+                      onChange={(e) => { setCategoryFilter(e.target.value); setCurrentPage(1); }}
+                      className="bg-slate-900 border border-slate-700 text-xs px-2 py-1.5 rounded-lg text-slate-400"
+                    >
+                      <option value="all">All Categories</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    onClick={() => { setIsJobModalOpen(true); setEditingJob(null); setJobFormData({ position: "", categoryId: "", salaryRange: "" }); }}
+                    className="px-4 py-2.5 rounded-xl bg-gold-600 hover:bg-gold-500 hover:cursor-pointer text-white font-semibold text-sm transition-all flex items-center space-x-2 flex-shrink-0"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Create New Position</span>
+                  </button>
+                </div>
+                <div className="overflow-x-auto rounded-xl border border-slate-800/80 bg-slate-950/20">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-800 bg-slate-900/40 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                        <th className="py-4 px-6">Position</th>
+                        <th className="py-4 px-6">Category</th>
+                        <th className="py-4 px-6">Location</th>
+                        <th className="py-4 px-6 text-right">Action</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-             </div>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60 text-sm">
+                      {(currentItems as JobPosition[]).map((job) => (
+                        <tr key={job.id} className="hover:bg-slate-900/35 transition-colors">
+                          <td className="py-4.5 px-6 font-semibold text-slate-100">{job.position}</td>
+                          <td className="py-4.5 px-6 text-slate-300">{job.category?.name || "N/A"}</td>
+                          <td className="py-4.5 px-6 text-slate-300">{job.category?.location || "N/A"}</td>
+                          <td className="py-4.5 px-6 text-right">
+                            <button onClick={() => editJob(job)} className="p-1.5 hover:text-gold-400 hover:cursor-pointer"><Edit2 className="h-4 w-4" /></button>
+                            <button onClick={() => setDeleteConfirmation({ type: "job", id: job.id })} className="p-1.5 hover:text-rose-400 hover:cursor-pointer"><Trash2 className="h-4 w-4" /></button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg font-bold text-white">Categories</h3>
+                  <button
+                    onClick={() => { setIsCategoryModalOpen(true); setEditingCategory(null); setCatFormData({ name: "", description: "", location: "" }); }}
+                    className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 hover:cursor-pointer text-white font-semibold text-sm transition-all flex items-center space-x-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Create New Category</span>
+                  </button>
+                </div>
+                <div className="overflow-x-auto rounded-xl border border-slate-800/80 bg-slate-950/20">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-800 bg-slate-900/40 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                        <th className="py-4 px-6">Name</th>
+                        <th className="py-4 px-6">Description</th>
+                        <th className="py-4 px-6">Location</th>
+                        <th className="py-4 px-6 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60 text-sm">
+                      {(currentItems as JobCategory[]).map((cat) => (
+                        <tr key={cat.id} className="hover:bg-slate-900/35 transition-colors">
+                          <td className="py-4.5 px-6 font-semibold text-slate-100">{cat.name}</td>
+                          <td className="py-4.5 px-6 text-slate-300">{cat.description}</td>
+                          <td className="py-4.5 px-6 text-slate-300">{cat.location}</td>
+                          <td className="py-4.5 px-6 text-right">
+                            <button onClick={() => editCategory(cat)} className="p-1.5 hover:text-gold-400 hover:cursor-pointer"><Edit2 className="h-4 w-4" /></button>
+                            <button onClick={() => setDeleteConfirmation({ type: "category", id: cat.id })} className="p-1.5 hover:text-rose-400 hover:cursor-pointer"><Trash2 className="h-4 w-4" /></button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
           </section>
         )}
-        
-        {activeTab === 'accounts' && userRole === 'admin' && <AccountsTab />}
-        
-        {/* Pagination Controls */}
+
+        {/* ── ACCOUNTS TAB ── */}
+        {activeTab === "accounts" && userRole === "admin" && <AccountsTab />}
+
+        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center space-x-4 py-4 border-t border-slate-800">
             <button
               disabled={currentPage === 1}
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
               className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 disabled:opacity-50 text-sm font-medium hover:border-slate-600 transition-colors flex items-center gap-2"
             >
-              <ChevronLeft className="h-4 w-4" />
-              Previous
+              <ChevronLeft className="h-4 w-4" /> Previous
             </button>
-            <span className="text-sm text-slate-400">
-              Page {currentPage} of {totalPages}
-            </span>
+            <span className="text-sm text-slate-400">Page {currentPage} of {totalPages}</span>
             <button
               disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
               className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 disabled:opacity-50 text-sm font-medium hover:border-slate-600 transition-colors flex items-center gap-2"
             >
-              Next
-              <ChevronRight className="h-4 w-4" />
+              Next <ChevronRight className="h-4 w-4" />
             </button>
           </div>
         )}
       </main>
 
-      {/* Modals */}
+      {/* ── MODALS ── */}
+
+      {/* Create / Edit Position Modal */}
       {isJobModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="glass-card w-full max-w-lg rounded-2xl p-6 border border-slate-800 ">
-            <h3 className="text-lg font-bold text-white mb-4">{editingJob ? 'Edit Job' : 'Create New Job'}</h3>
+          <div className="glass-card w-full max-w-lg rounded-2xl p-6 border border-slate-800">
+            <h3 className="text-lg font-bold text-white mb-4">{editingJob ? "Edit Position" : "Create New Position"}</h3>
             <form onSubmit={handleJobSubmit} className="space-y-4">
               <div className="relative">
-                <Briefcase className="absolute left-3 top-3.5 h-4 w-4 text-slate-500" />
-                <input type="text" placeholder="Position" required value={jobFormData.position} onChange={(e) => setJobFormData({...jobFormData, position: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-200" />
-              </div>
-              <div className="relative">
                 <Layers className="absolute left-3 top-3.5 h-4 w-4 text-slate-500" />
-                <input type="text" placeholder="Category" required value={jobFormData.category} onChange={(e) => setJobFormData({...jobFormData, category: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-200" />
+                <select
+                  required
+                  value={jobFormData.categoryId}
+                  onChange={(e) => setJobFormData({ ...jobFormData, categoryId: e.target.value })}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-200"
+                >
+                  <option value="">Select a Category</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
               </div>
               <div className="relative">
-                <MapPin className="absolute left-3 top-3.5 h-4 w-4 text-slate-500" />
-                <input type="text" placeholder="Location" required value={jobFormData.location} onChange={(e) => setJobFormData({...jobFormData, location: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-200" />
+                <Briefcase className="absolute left-3 top-3.5 h-4 w-4 text-slate-500" />
+                <input
+                  type="text"
+                  placeholder="Position Title"
+                  required
+                  value={jobFormData.position}
+                  onChange={(e) => setJobFormData({ ...jobFormData, position: e.target.value })}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-200"
+                />
               </div>
-              <textarea placeholder="Description" required value={jobFormData.description} onChange={(e) => setJobFormData({...jobFormData, description: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 resize-none" rows={3} />
               <div className="relative">
                 <DollarSign className="absolute left-3 top-3.5 h-4 w-4 text-slate-500" />
-                <input type="text" placeholder="Salary Range (Optional)" value={jobFormData.salaryRange} onChange={(e) => setJobFormData({...jobFormData, salaryRange: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-200" />
+                <input
+                  type="text"
+                  placeholder="Salary Range (Optional)"
+                  value={jobFormData.salaryRange}
+                  onChange={(e) => setJobFormData({ ...jobFormData, salaryRange: e.target.value })}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-200"
+                />
               </div>
-              
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setIsJobModalOpen(false)} className="px-4 py-2 rounded-xl text-slate-400 hover:text-slate-200 text-sm">Cancel</button>
-                <button type="submit" className="px-4 py-2 rounded-xl bg-gold-600 hover:bg-gold-500 text-white text-sm font-semibold">{editingJob ? 'Save Changes' : 'Create Job'}</button>
+                <button type="submit" className="px-4 py-2 rounded-xl bg-gold-600 hover:bg-gold-500 text-white text-sm font-semibold">{editingJob ? "Save Changes" : "Create Position"}</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
+      {/* Create / Edit Category Modal */}
+      {isCategoryModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="glass-card w-full max-w-lg rounded-2xl p-6 border border-slate-800">
+            <h3 className="text-lg font-bold text-white mb-4">{editingCategory ? "Edit Category" : "Create New Category"}</h3>
+            <form onSubmit={handleCategorySubmit} className="space-y-4">
+              <div className="relative">
+                <Layers className="absolute left-3 top-3.5 h-4 w-4 text-slate-500" />
+                <input
+                  type="text"
+                  placeholder="Category Name"
+                  required
+                  value={catFormData.name}
+                  onChange={(e) => setCatFormData({ ...catFormData, name: e.target.value })}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-200"
+                />
+              </div>
+              <textarea
+                placeholder="Description"
+                required
+                value={catFormData.description}
+                onChange={(e) => setCatFormData({ ...catFormData, description: e.target.value })}
+                className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 resize-none"
+                rows={3}
+              />
+              <div className="relative">
+                <MapPin className="absolute left-3 top-3.5 h-4 w-4 text-slate-500" />
+                <input
+                  type="text"
+                  placeholder="Location"
+                  required
+                  value={catFormData.location}
+                  onChange={(e) => setCatFormData({ ...catFormData, location: e.target.value })}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-200"
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button type="button" onClick={() => setIsCategoryModalOpen(false)} className="px-4 py-2 rounded-xl text-slate-400 hover:text-slate-200 text-sm">Cancel</button>
+                <button type="submit" className="px-4 py-2 rounded-xl bg-gold-600 hover:bg-gold-500 text-white text-sm font-semibold">{editingCategory ? "Save Changes" : "Create Category"}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
       {deleteConfirmation && (
-        <div className="fixed inset-0 z-100 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="glass-card w-full max-w-sm rounded-2xl p-6 border border-slate-800 text-center">
             <AlertTriangle className="h-12 w-12 text-rose-500 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-white mb-2">Delete {deleteConfirmation.type === 'job' ? 'Job' : 'Applicant'}?</h3>
-            <p className="text-sm text-slate-400 mb-6">Are you sure you want to delete this {deleteConfirmation.type}? This action cannot be undone.</p>
+            <h3 className="text-lg font-bold text-white mb-2 capitalize">Delete {deleteConfirmation.type}?</h3>
+            <p className="text-sm text-slate-400 mb-6">
+              Are you sure you want to delete this {deleteConfirmation.type}? This action cannot be undone.
+            </p>
             <div className="flex gap-3">
               <button onClick={() => setDeleteConfirmation(null)} className="flex-1 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold">Cancel</button>
               <button onClick={confirmDelete} className="flex-1 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-sm font-semibold">Delete</button>
@@ -688,29 +808,42 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {/* Position Success Modal */}
       {showSuccessModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="glass-card w-full max-w-sm rounded-2xl p-6 border border-slate-800 text-center">
             <div className="mx-auto h-12 w-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4">
               <UserCheck className="h-6 w-6 text-emerald-400" />
             </div>
-            <h3 className="text-lg font-bold text-white mb-2">Job {editingJob ? 'Updated' : 'Created'}</h3>
-            <p className="text-sm text-slate-400 mb-6">The job position has been {editingJob ? 'updated' : 'added'} successfully.</p>
+            <h3 className="text-lg font-bold text-white mb-2">Position {editingJob ? "Updated" : "Created"}</h3>
+            <p className="text-sm text-slate-400 mb-6">The job position has been {editingJob ? "updated" : "added"} successfully.</p>
             <button onClick={() => setShowSuccessModal(false)} className="w-full px-4 py-2.5 rounded-xl bg-gold-600 hover:bg-gold-500 text-white text-sm font-semibold">Close</button>
           </div>
         </div>
       )}
 
-      {/* Applicant Drawer */}
+      {/* Category Success Modal */}
+      {showCategorySuccessModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="glass-card w-full max-w-sm rounded-2xl p-6 border border-slate-800 text-center">
+            <div className="mx-auto h-12 w-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4">
+              <UserCheck className="h-6 w-6 text-emerald-400" />
+            </div>
+            <h3 className="text-lg font-bold text-white mb-2">Category {editingCategory ? "Updated" : "Created"}</h3>
+            <p className="text-sm text-slate-400 mb-6">The category has been {editingCategory ? "updated" : "added"} successfully.</p>
+            <button onClick={() => setShowCategorySuccessModal(false)} className="w-full px-4 py-2.5 rounded-xl bg-gold-600 hover:bg-gold-500 text-white text-sm font-semibold">Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* ── APPLICANT DRAWER ── */}
       {selectedApplicant && (
         <div className="fixed inset-0 z-50 overflow-hidden bg-slate-950/80 backdrop-blur-xs flex justify-end">
           <div className="w-full max-w-2xl bg-[#090d18] border-l border-slate-800 shadow-2xl h-full flex flex-col relative animate-in slide-in-from-right duration-300">
             <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
-              <div className="flex items-center gap-4">
-                <div>
-                  <span className="text-xs font-semibold text-gold-400 tracking-widest uppercase">Candidate Review</span>
-                  <h3 className="text-xl font-bold text-white mt-0.5">{selectedApplicant.name}</h3>
-                </div>
+              <div>
+                <span className="text-xs font-semibold text-gold-400 tracking-widest uppercase">Candidate Review</span>
+                <h3 className="text-xl font-bold text-white mt-0.5">{selectedApplicant.name}</h3>
               </div>
               <button
                 onClick={() => setSelectedApplicant(null)}
@@ -720,6 +853,7 @@ export default function AdminDashboard() {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-6 space-y-8">
+              {/* Status */}
               <div className="p-4 rounded-xl bg-slate-950 border border-slate-850 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <span className="text-xs text-slate-500 font-medium block">Hiring Pipeline Stage</span>
@@ -727,88 +861,84 @@ export default function AdminDashboard() {
                     {selectedApplicant.status}
                   </span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <select
-                    disabled={savingStatus}
-                    value={selectedApplicant.status}
-                    onChange={(e) => handleUpdateStatus(selectedApplicant.id, e.target.value as Applicant["status"])}
-                    className="bg-slate-900 border border-slate-800 text-slate-200 text-xs font-semibold rounded-lg px-3 py-2 cursor-pointer focus:outline-none focus:border-gold-500"
-                  >
-                    <option value="applied">Applied</option>
-                    <option value="interviewing">Interviewing</option>
-                    <option value="hired">Hired</option>
-                    <option value="rejected">Rejected</option>
-                  </select>
-                </div>
+                <select
+                  disabled={savingStatus}
+                  value={selectedApplicant.status}
+                  onChange={(e) => handleUpdateStatus(selectedApplicant.id, e.target.value as Applicant["status"])}
+                  className="bg-slate-900 border border-slate-800 text-slate-200 text-xs font-semibold rounded-lg px-3 py-2 cursor-pointer focus:outline-none focus:border-gold-500"
+                >
+                  <option value="applied">Applied</option>
+                  <option value="interviewing">Interviewing</option>
+                  <option value="hired">Hired</option>
+                  <option value="rejected">Rejected</option>
+                </select>
               </div>
+
+              {/* Contact & Credentials */}
               <div className="space-y-4">
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-800 pb-2">
                   Contact & Credentials
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex items-center space-x-3 text-sm text-slate-300">
-                    <Mail className="h-4.5 w-4.5 text-slate-500 shrink-0" />
-                    <a href={`mailto:${selectedApplicant.email}`} className="hover:text-gold-400 transition-colors truncate">
-                      {selectedApplicant.email}
-                    </a>
+                    <Mail className="h-4 w-4 text-slate-500 shrink-0" />
+                    <a href={`mailto:${selectedApplicant.email}`} className="hover:text-gold-400 transition-colors truncate">{selectedApplicant.email}</a>
                   </div>
                   <div className="flex items-center space-x-3 text-sm text-slate-300">
-                    <Phone className="h-4.5 w-4.5 text-slate-500 shrink-0" />
+                    <Phone className="h-4 w-4 text-slate-500 shrink-0" />
                     <span>{selectedApplicant.whatsapp_number}</span>
                   </div>
                   <div className="flex items-center space-x-3 text-sm text-slate-300">
-                    <Briefcase className="h-4.5 w-4.5 text-slate-500 shrink-0" />
+                    <Briefcase className="h-4 w-4 text-slate-500 shrink-0" />
                     <span>Applying for: <strong>{selectedApplicant.positionTitle}</strong></span>
                   </div>
                   <div className="flex items-center space-x-3 text-sm text-slate-300">
-                    <span className="text-slate-500 text-xs font-bold shrink-0 uppercase w-4.5">PSS</span>
+                    <span className="text-slate-500 text-xs font-bold shrink-0 uppercase">PSS</span>
                     <span>Pass Type: {selectedApplicant.passType}</span>
                   </div>
                   <div className="flex items-center space-x-3 text-sm text-slate-300">
-                    <span className="text-slate-500 text-xs font-bold shrink-0 uppercase w-4.5">Ntc</span>
+                    <span className="text-slate-500 text-xs font-bold shrink-0 uppercase">Ntc</span>
                     <span>Notice Period: {selectedApplicant.noticePeriod}</span>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 pt-2">
                   {selectedApplicant.linkedin && (
                     <a href={selectedApplicant.linkedin} target="_blank" rel="noreferrer" className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-gold-500/10 text-gold-400 border border-gold-500/20 text-xs font-semibold hover:bg-gold-500/20 transition-colors">
-                      <span>LinkedIn</span>
-                      <ExternalLink className="h-3 w-3" />
+                      <span>LinkedIn</span><ExternalLink className="h-3 w-3" />
                     </a>
                   )}
                   {selectedApplicant.portfolio && (
-                    <a href={selectedApplicant.portfolio} target="_blank" rel="noreferrer" className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-850 transition-colors">
-                      <span>Portfolio / Website</span>
-                      <ExternalLink className="h-3 w-3" />
+                    <a href={selectedApplicant.portfolio} target="_blank" rel="noreferrer" className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-800 transition-colors">
+                      <span>Portfolio / Website</span><ExternalLink className="h-3 w-3" />
                     </a>
                   )}
                   {selectedApplicant.resumeUrl && (
                     <a href={selectedApplicant.resumeUrl} target="_blank" rel="noreferrer" className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-semibold hover:bg-emerald-500/20 transition-colors">
-                      <span>Download Resume / CV</span>
-                      <ExternalLink className="h-3 w-3" />
+                      <span>Download Resume / CV</span><ExternalLink className="h-3 w-3" />
                     </a>
                   )}
                 </div>
               </div>
-              
+
+              {/* Recruiter Notes */}
               <div className="space-y-4">
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-800 pb-2">
                   Recruiter Notes
                 </h4>
-                {selectedApplicant.notes && selectedApplicant.notes.length > 0 ? (
+                {selectedApplicant.notes?.length > 0 ? (
                   <div className="space-y-3">
                     {selectedApplicant.notes.map((note) => (
-                      <div key={note.id} className="p-3.5 rounded-xl bg-slate-900 border border-slate-850 text-xs space-y-1">
+                      <div key={note.id} className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-xs space-y-1">
                         <div className="flex items-center justify-between text-slate-500">
                           <span className="font-semibold text-slate-400">Recruiter Log</span>
-                          <span>{new Date(note.createdAt).toLocaleDateString()} at {new Date(note.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span>{new Date(note.createdAt).toLocaleDateString()} at {new Date(note.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                         </div>
                         <p className="text-slate-300 leading-relaxed">{note.text}</p>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-6 bg-slate-950/40 rounded-xl border border-slate-900 text-slate-650 text-xs">
+                  <div className="text-center py-6 bg-slate-950/40 rounded-xl border border-slate-900 text-slate-500 text-xs">
                     No notes recorded for this candidate yet.
                   </div>
                 )}
@@ -824,19 +954,17 @@ export default function AdminDashboard() {
                   <div className="flex justify-between items-center">
                     <button
                       type="button"
-                      onClick={() => setDeleteConfirmation({type: 'applicant', id: selectedApplicant.id})}
+                      onClick={() => setDeleteConfirmation({ type: "applicant", id: selectedApplicant.id })}
                       className="px-4 py-2 rounded-xl bg-rose-900/20 hover:bg-rose-900/30 text-rose-400 font-semibold text-xs transition-colors flex items-center space-x-1.5 cursor-pointer"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      <span>Delete Applicant</span>
+                      <Trash2 className="h-3.5 w-3.5" /><span>Delete Applicant</span>
                     </button>
                     <button
                       type="submit"
                       disabled={savingNote}
                       className="px-4 py-2 rounded-xl bg-gold-600 hover:bg-gold-500 text-white font-semibold text-xs transition-colors flex items-center space-x-1.5 cursor-pointer"
                     >
-                      <Plus className="h-3.5 w-3.5" />
-                      <span>{savingNote ? "Saving..." : "Add Note"}</span>
+                      <Plus className="h-3.5 w-3.5" /><span>{savingNote ? "Saving..." : "Add Note"}</span>
                     </button>
                   </div>
                 </form>
@@ -845,10 +973,10 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-      
+
       <footer className="border-t border-slate-900 bg-slate-950 py-6 mt-auto">
         <div className="max-w-7xl mx-auto px-6 text-center text-xs text-slate-500">
-          <span>&copy; 2026 Golden Dragon Careers Internal Application Tracking System.</span>
+          &copy; 2026 Golden Dragon Careers Internal Application Tracking System.
         </div>
       </footer>
     </div>

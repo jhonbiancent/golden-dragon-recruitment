@@ -20,7 +20,7 @@ import {
 interface JobPosition {
   id: string;
   position: string;
-  category: string;
+  category: { name: string; description: string; location: string };
   location: string;
   description: string;
   salaryRange?: string;
@@ -85,12 +85,12 @@ export default function Home() {
     setCurrentPage(1);
   }, [searchTerm, selectedDept]);
 
-  const departments = ["All", ...Array.from(new Set(jobs.map(j => j.category)))];
+  const departments = ["All", ...Array.from(new Set((jobs || []).map(j => j.category?.name || "Uncategorized")))];
 
-  const filteredJobs = jobs.filter(job => {
+  const filteredJobs = (jobs || []).filter(job => {
     const matchesSearch = job.position.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           job.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDept = selectedDept === "All" || job.category === selectedDept;
+    const matchesDept = selectedDept === "All" || (job.category?.name || "Uncategorized") === selectedDept;
     return matchesSearch && matchesDept;
   });
 
@@ -112,7 +112,7 @@ export default function Home() {
     setSelectedJob({
       id: "general",
       position: "General Application",
-      category: "General",
+      category: { name: "General", description: "", location: "" },
       location: "Remote / Multiple",
       description: "Submit your profile for future opportunities that match your skills.",
       status: "active",
@@ -289,7 +289,7 @@ export default function Home() {
                   <div>
                     <div className="flex items-start justify-between mb-4">
                       <span className="inline-flex items-center rounded-lg bg-gold-500/10 px-2.5 py-1 text-xs font-semibold text-gold-400 border border-gold-500/20">
-                        {job.category}
+                        {job.category?.name || "Uncategorized"}
                       </span>
                     </div>
 
@@ -351,6 +351,9 @@ export default function Home() {
           <div className="text-center py-16 glass-card rounded-2xl border border-dashed border-slate-800">
             <Briefcase className="h-12 w-12 text-slate-600 mx-auto mb-4" />
             <h3 className="text-lg font-bold text-slate-300">No positions found</h3>
+            <p className="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
+              We couldn't find any job matching "{searchTerm}". Try refining your search keywords or categories.
+            </p>
           </div>
         )}
       </main>

@@ -30,32 +30,54 @@ export interface Applicant {
   appliedAt: string;
 }
 
-export interface JobPosition {
+export interface JobCategory {
   id: string;
-  position: string;
-  category: string;
-  location: string;
+  name: string;
   description: string;
-  salaryRange?: string;
-  status: "active" | "closed";
+  location: string;
 }
 
-export async function addJob(newJob: Omit<JobPosition, "id" | "status">): Promise<JobPosition | null> {
-  const id = newJob.position.toLowerCase().replace(/\s+/g, '-');
-  
-  if (!isSupabaseConfigured()) {
-    return null;
-  }
+export interface JobPosition {
+  id: string;
+  category_id: string;
+  position: string;
+  salaryRange?: string;
+  status: "active" | "closed";
+  deleted_at?: string;
+  // Joined field
+  category?: JobCategory;
+}
+
+export async function addJob(newJob: { categoryName: string, categoryDescription?: string, categoryLocation?: string, position: string, salaryRange?: string }): Promise<JobPosition | null> {
+  if (!isSupabaseConfigured()) return null;
 
   try {
+    // 1. Ensure category exists or create it
+    let { data: category, error: catError } = await supabase
+      .from("jobs_category")
+      .select("id")
+      .eq("name", newJob.categoryName)
+      .maybeSingle();
+
+    if (!category) {
+        const { data: newCat, error: createCatError } = await supabase
+            .from("jobs_category")
+            .insert({ 
+                name: newJob.categoryName, 
+                description: newJob.categoryDescription || 'Default', 
+                location: newJob.categoryLocation || 'Global' 
+            })
+            .select('id')
+            .single();
+        if (createCatError) throw createCatError;
+        category = newCat;
+    }
+
     const { data, error } = await supabase
-      .from("jobs")
+      .from("jobs_position")
       .insert({
-        id,
+        category_id: category.id,
         position: newJob.position,
-        category: newJob.category,
-        location: newJob.location,
-        description: newJob.description,
         salary_range: newJob.salaryRange || null,
         status: "active"
       })
@@ -79,12 +101,10 @@ export async function updateJob(id: string, updates: Partial<JobPosition>): Prom
 
   try {
     const { data, error } = await supabase
-      .from("jobs")
+      .from("jobs_position")
       .update({
         position: updates.position,
-        category: updates.category,
-        location: updates.location,
-        description: updates.description,
+        category_id: updates.category_id,
         salary_range: updates.salaryRange || null,
         status: updates.status
       })
@@ -105,7 +125,7 @@ export async function deleteJob(id: string): Promise<boolean> {
 
   try {
     const { error } = await supabase
-      .from("jobs")
+      .from("jobs_position")
       .update({ 
         status: "closed", 
         deleted_at: new Date().toISOString() 
@@ -127,8 +147,8 @@ export async function getJobs(): Promise<JobPosition[]> {
 
   try {
     const { data, error } = await supabase
-      .from("jobs")
-      .select("*")
+      .from("jobs_position")
+      .select("*, category:jobs_category(*)")
       .eq("status", "active")
       .is("deleted_at", null);
 
@@ -147,8 +167,8 @@ export async function getJobById(id: string): Promise<JobPosition | undefined> {
 
   try {
     const { data, error } = await supabase
-      .from("jobs")
-      .select("*")
+      .from("jobs_position")
+      .select("*, category:jobs_category(*)")
       .eq("id", id)
       .single();
 
@@ -166,7 +186,6 @@ export async function getApplicants(): Promise<Applicant[]> {
   }
 
   try {
-    // Fetch applicants
     const { data: dbApplicants, error: appError } = await supabase
       .from("applicants")
       .select("*")
@@ -174,7 +193,6 @@ export async function getApplicants(): Promise<Applicant[]> {
 
     if (appError) throw appError;
 
-    // Fetch notes
     const { data: dbNotes, error: notesError } = await supabase
       .from("notes")
       .select("*")
@@ -182,7 +200,6 @@ export async function getApplicants(): Promise<Applicant[]> {
 
     if (notesError) throw notesError;
 
-    // Map database structures back to frontend Typescript interfaces
     return (dbApplicants || []).map(app => {
       const notesForApp = (dbNotes || [])
         .filter(note => note.applicant_id === app.id)
@@ -222,7 +239,6 @@ export async function getApplicants(): Promise<Applicant[]> {
 export async function addApplicant(newApplicant: Omit<Applicant, "id" | "status" | "notes" | "appliedAt" | "positionTitle"> & { customPosition?: string, positionId?: string }): Promise<Applicant> {
   const position = newApplicant.positionId ? await getJobById(newApplicant.positionId) : undefined;
   
-  // If customPosition is provided, use it. Otherwise, fallback to the matched job title or "General Position"
   const positionTitle = newApplicant.customPosition || (position ? position.position : "General Position");
   
   const id = `app-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
