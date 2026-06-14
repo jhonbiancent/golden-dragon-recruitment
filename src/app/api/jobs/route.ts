@@ -4,11 +4,18 @@ import { requireAdmin } from '@/lib/auth'
 
 export async function GET(request: Request) {
   try {
-    await requireAdmin()
     const { searchParams } = new URL(request.url)
     const type = searchParams.get('type')
 
-    if (type === 'positions') {
+    if (type === 'categories') {
+      const { data, error } = await adminSupabase
+        .from('jobs_category')
+        .select('*');
+
+      if (error) throw error
+      return NextResponse.json({ categories: data })
+    } else {
+      // Default to positions
       const { data, error } = await adminSupabase
         .from('jobs_position')
         .select('*, category:jobs_category(*)')
@@ -16,14 +23,7 @@ export async function GET(request: Request) {
         .is('deleted_at', null);
 
       if (error) throw error
-      return NextResponse.json({ data })
-    } else {
-      const { data, error } = await adminSupabase
-        .from('jobs_category')
-        .select('*');
-
-      if (error) throw error
-      return NextResponse.json({ data })
+      return NextResponse.json({ jobs: data })
     }
   } catch (error: any) {
     console.error("API Error:", error)

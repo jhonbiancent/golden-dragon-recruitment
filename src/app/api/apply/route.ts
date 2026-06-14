@@ -5,13 +5,14 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { 
-      name, email, phone, positionId, customPosition, 
-      age, nationality, expectedSalary, availability, passType, resumeUrl 
+      name, email, whatsapp_number, positionId, customPosition, 
+      age, nationality, expectedSalary, availability, passType, resumeUrl,
+      gender, current_location
     } = body;
 
-    // Validation
-    if (!name || !email || !phone || !age || !nationality || !expectedSalary || !availability || !passType || !resumeUrl || 
-        (!positionId || (positionId === 'general' && !customPosition))) {
+    // Validation - ensure all non-nullable fields according to schema are present
+    if (!name || !email || !whatsapp_number || !age || !nationality || !expectedSalary || !availability || !passType || !resumeUrl || 
+        (!positionId && !customPosition)) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -21,15 +22,19 @@ export async function POST(request: Request) {
     const applicant = await addApplicant({
       name,
       email,
-      phone,
-      positionId: positionId === 'general' ? '' : positionId,
-      customPosition: positionId === 'general' ? customPosition : '',
+      whatsapp_number,
+      positionId: positionId === 'general' ? undefined : positionId,
+      customPosition: positionId === 'general' ? customPosition : undefined,
       age: parseInt(age),
       nationality,
       expectedSalary,
       availability,
       passType,
-      resumeUrl
+      resumeUrl,
+      gender: gender || "",
+      current_location: current_location || "",
+      coverLetter: body.coverLetter || "",
+      noticePeriod: body.noticePeriod || ""
     });
 
     return NextResponse.json(

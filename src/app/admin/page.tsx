@@ -125,8 +125,8 @@ export default function AdminDashboard() {
       const meData = await meRes.json();
       const catData = await catRes.json();
       setApplicants(appData.applicants || []);
-      setJobs(jobsData.data || []);
-      setCategories(catData.data || []);
+      setJobs(jobsData.jobs || []);
+      setCategories(catData.categories || []);
       setUserRole(meData.role || null);
     } catch (error) {
       console.error("Failed to load data:", error);
@@ -253,6 +253,7 @@ export default function AdminDashboard() {
         alert("Failed to delete applicant.");
       }
     } else {
+      // 'job' and 'category' both go to /api/jobs
       const response = await fetch("/api/jobs", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
@@ -593,13 +594,22 @@ export default function AdminDashboard() {
                       ))}
                     </select>
                   </div>
-                  <button
-                    onClick={() => { setIsJobModalOpen(true); setEditingJob(null); setJobFormData({ position: "", categoryId: "", salaryRange: "" }); }}
-                    className="px-4 py-2.5 rounded-xl bg-gold-600 hover:bg-gold-500 hover:cursor-pointer text-white font-semibold text-sm transition-all flex items-center space-x-2 flex-shrink-0"
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span>Create New Position</span>
-                  </button>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => { setIsCategoryModalOpen(true); setEditingCategory(null); setCatFormData({ name: "", description: "", location: "" }); }}
+                      className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 hover:cursor-pointer text-white font-semibold text-sm transition-all flex items-center space-x-2 flex-shrink-0"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>Create Job Category</span>
+                    </button>
+                    <button
+                      onClick={() => { setIsJobModalOpen(true); setEditingJob(null); setJobFormData({ position: "", categoryId: "", salaryRange: "" }); }}
+                      className="px-4 py-2.5 rounded-xl bg-gold-600 hover:bg-gold-500 hover:cursor-pointer text-white font-semibold text-sm transition-all flex items-center space-x-2 flex-shrink-0"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>Create New Position</span>
+                    </button>
+                  </div>
                 </div>
                 <div className="overflow-x-auto rounded-xl border border-slate-800/80 bg-slate-950/20">
                   <table className="w-full text-left border-collapse">

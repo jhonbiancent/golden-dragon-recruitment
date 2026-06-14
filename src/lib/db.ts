@@ -12,6 +12,7 @@ export interface Applicant {
   name: string;
   email: string;
   whatsapp_number: string;
+  age: number;
   gender: string;
   nationality: string;
   current_location: string;
@@ -214,6 +215,7 @@ export async function getApplicants(): Promise<Applicant[]> {
         name: app.name,
         email: app.email,
         whatsapp_number: app.whatsapp_number,
+        age: app.age,
         gender: app.gender,
         nationality: app.nationality,
         current_location: app.current_location,
@@ -266,19 +268,17 @@ export async function addApplicant(newApplicant: Omit<Applicant, "id" | "status"
       name: applicant.name,
       email: applicant.email,
       whatsapp_number: applicant.whatsapp_number,
+      age: applicant.age,
       gender: applicant.gender,
       nationality: applicant.nationality,
       current_location: applicant.current_location,
-      position_id: applicant.positionId,
       position_title: applicant.positionTitle,
       expected_salary: applicant.expectedSalary,
       availability: applicant.availability,
       pass_type: applicant.passType,
       resume_url: applicant.resumeUrl,
       status: "applied",
-      applied_at: appliedAt,
-      cover_letter: applicant.coverLetter,
-      notice_period: applicant.noticePeriod
+      applied_at: appliedAt
     });
 
     if (error) throw error;

@@ -20,23 +20,33 @@ import {
 interface JobPosition {
   id: string;
   position: string;
-  category: { name: string; description: string; location: string };
-  location: string;
-  description: string;
+  category?: { 
+    id: string;
+    name: string; 
+    description: string; 
+    location: string 
+  };
   salaryRange?: string;
   status: "active" | "closed";
 }
 
+interface GroupedCategory {
+  id: string;
+  name: string;
+  description: string;
+  location: string;
+  positions: JobPosition[];
+}
+
 export default function Home() {
   const [jobs, setJobs] = useState<JobPosition[]>([]);
-  const [selectedJob, setSelectedJob] = useState<JobPosition | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<GroupedCategory | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDept, setSelectedDept] = useState("All");
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const JOBS_PER_PAGE = 10;
+  const ITEMS_PER_PAGE = 10;
   
   // Loading State
   const [loading, setLoading] = useState(true);
@@ -47,8 +57,11 @@ export default function Home() {
     email: "",
     whatsapp_number: "",
     resumeUrl: "",
+    selectedCategoryId: "", // Added for Quick Apply logic
+    selectedPositionId: "", 
     customPosition: "",
     age: "",
+    gender: "Male",
     nationality: "",
     current_location: "",
     expectedSalary: "",
@@ -70,7 +83,7 @@ export default function Home() {
         const response = await fetch("/api/jobs");
         if (!response.ok) throw new Error("Failed to fetch");
         const data = await response.json();
-        setJobs(data.jobs);
+        setJobs(data.jobs || []);
       } catch (err) {
         console.error("Error loading jobs:", err);
       } finally {
@@ -80,52 +93,87 @@ export default function Home() {
     loadJobs();
   }, []);
 
-  // Reset page when search or department changes
+  // Reset page when search changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedDept]);
+  }, [searchTerm]);
 
-  const departments = ["All", ...Array.from(new Set((jobs || []).map(j => j.category?.name || "Uncategorized")))];
+  // Group positions by category
+  const groupedCategories: GroupedCategory[] = React.useMemo(() => {
+    const groups: Record<string, GroupedCategory> = {};
+    
+    (jobs || []).forEach(job => {
+      const cat = job.category;
+      if (!cat) return;
+      
+      if (!groups[cat.id]) {
+        groups[cat.id] = {
+          id: cat.id,
+          name: cat.name,
+          description: cat.description,
+          location: cat.location,
+          positions: []
+        };
+      }
+      groups[cat.id].positions.push(job);
+    });
+    
+    return Object.values(groups);
+  }, [jobs]);
 
-  const filteredJobs = (jobs || []).filter(job => {
-    const matchesSearch = job.position.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          job.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDept = selectedDept === "All" || (job.category?.name || "Uncategorized") === selectedDept;
-    return matchesSearch && matchesDept;
+  const filteredCategories = groupedCategories.filter(cat => {
+    const matchesSearch = cat.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          cat.description.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
   });
 
   // Calculate pagination
-  const totalPages = Math.ceil(filteredJobs.length / JOBS_PER_PAGE);
-  const indexOfLastJob = currentPage * JOBS_PER_PAGE;
-  const indexOfFirstJob = indexOfLastJob - JOBS_PER_PAGE;
-  const currentJobs = filteredJobs.slice(indexOfFirstJob, indexOfLastJob);
+  const totalPages = Math.ceil(filteredCategories.length / ITEMS_PER_PAGE);
+  const indexOfLast = currentPage * ITEMS_PER_PAGE;
+  const indexOfFirst = indexOfLast - ITEMS_PER_PAGE;
+  const currentCategories = filteredCategories.slice(indexOfFirst, indexOfLast);
 
-  const handleOpenApply = (job: JobPosition) => {
-    setSelectedJob(job);
+  const handleOpenApply = (cat: GroupedCategory) => {
+    setSelectedCategory(cat);
     setIsModalOpen(true);
     setSubmitSuccess(false);
     setErrorMessage("");
-    setFormData(prev => ({ ...prev, customPosition: "" }));
+    setFormData(prev => ({ 
+        ...prev, 
+        selectedCategoryId: cat.id,
+        selectedPositionId: cat.positions.length > 0 ? cat.positions[0].id : "",
+        customPosition: "" 
+    }));
   };
 
-  const handleOpenGeneralApply = async () => {
-    setSelectedJob({
-      id: "general",
-      position: "General Application",
-      category: { name: "General", description: "", location: "" },
-      location: "Remote / Multiple",
-      description: "Submit your profile for future opportunities that match your skills.",
-      status: "active",
-    });
+  const handleOpenGeneralApply = () => {
+    // Quick Apply logic: Start with no category selected or "General"
+    setSelectedCategory(null);
     setIsModalOpen(true);
     setSubmitSuccess(false);
     setErrorMessage("");
-    setFormData(prev => ({ ...prev, customPosition: "" }));
+    setFormData(prev => ({ 
+        ...prev, 
+        selectedCategoryId: "", 
+        selectedPositionId: "", 
+        customPosition: "" 
+    }));
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    if (name === "selectedCategoryId") {
+        const cat = groupedCategories.find(c => c.id === value) || null;
+        setSelectedCategory(cat);
+        setFormData(prev => ({ 
+            ...prev, 
+            [name]: value, 
+            selectedPositionId: cat && cat.positions.length > 0 ? cat.positions[0].id : "" 
+        }));
+    } else {
+        setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -134,15 +182,23 @@ export default function Home() {
     setErrorMessage("");
 
     try {
+      const activeCat = selectedCategory || groupedCategories.find(c => c.id === formData.selectedCategoryId);
+      const selectedPos = activeCat?.positions.find(p => p.id === formData.selectedPositionId);
+      
+      let positionTitle = "";
+      if (formData.selectedCategoryId === "general") {
+          positionTitle = formData.customPosition;
+      } else {
+          positionTitle = selectedPos?.position || activeCat?.name || "General Position";
+      }
+
       const response = await fetch("/api/apply", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          positionId: selectedJob?.id === 'general' ? undefined : selectedJob?.id,
-          positionTitle: selectedJob?.id === 'general' ? formData.customPosition : selectedJob?.position,
+          positionId: formData.selectedPositionId === 'general' ? undefined : formData.selectedPositionId,
+          positionTitle: positionTitle,
         }),
       });
 
@@ -155,8 +211,11 @@ export default function Home() {
             email: "",
             whatsapp_number: "",
             resumeUrl: "",
+            selectedCategoryId: "",
+            selectedPositionId: "",
             customPosition: "",
             age: "",
+            gender: "Male",
             nationality: "",
             current_location: "",
             expectedSalary: "",
@@ -221,7 +280,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
             <button 
               onClick={handleOpenGeneralApply}
-              className="px-8 py-4 rounded-2xl bg-gold-600 hover:bg-gold-500 text-white font-bold transition-all shadow-lg shadow-gold-500/25 flex items-center space-x-2 group"
+              className="px-8 py-4 rounded-2xl bg-gold-600 hover:bg-gold-500 text-white font-bold transition-all shadow-lg shadow-gold-500/25 flex items-center space-x-2 group hover:cursor-pointer"
             >
               <span>Quick Apply</span>
               <Send className="h-4 w-4" />
@@ -229,29 +288,16 @@ export default function Home() {
           </div>
 
           {/* Job Search bar */}
-          <div className="mt-40 lg:mt-0 max-w-xl mx-auto glass-card rounded-2xl p-2 shadow-2xl flex flex-col md:flex-row items-center gap-2">
+          <div className="mt-40 lg:mt-0 max-w-xl mx-auto glass-card rounded-2xl p-2 shadow-2xl flex items-center gap-2">
             <div className="relative w-full flex-1">
               <Search className="absolute left-4 top-3.5 h-5 w-5 text-slate-500" />
               <input
                 type="text"
-                placeholder="Search positions..."
+                placeholder="Search job categories (e.g. Technical, Admin)..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full bg-transparent border-0 pl-11 pr-4 py-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-0 text-sm"
               />
-            </div>
-            
-            <div className="w-full md:w-auto flex items-center gap-2">
-              <div className="h-8 w-px bg-slate-800 hidden md:block" />
-              <select
-                value={selectedDept}
-                onChange={(e) => setSelectedDept(e.target.value)}
-                className="bg-slate-900 border border-slate-800 text-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gold-500 cursor-pointer w-full md:w-auto"
-              >
-                {departments.map(dept => (
-                  <option key={dept} value={dept}>{dept} Categories</option>
-                ))}
-              </select>
             </div>
           </div>
         </div>
@@ -261,60 +307,67 @@ export default function Home() {
       <main className="grow max-w-6xl w-full mx-auto px-6 pb-24">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-white tracking-tight">Open Positions</h2>
-            <p className="text-sm text-slate-500 mt-1">Found {filteredJobs.length} opportunities for you</p>
+            <h2 className="text-2xl font-bold text-white tracking-tight">Open Opportunities</h2>
+            <p className="text-sm text-slate-500 mt-1">Found {filteredCategories.length} categories for you</p>
           </div>
         </div>
 
-        {/* Jobs Grid */}
+        {/* Categories Grid */}
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[...Array(6)].map((_, i) => (
+            {[...Array(4)].map((_, i) => (
               <div key={i} className="glass-card rounded-2xl p-6 h-64 animate-pulse">
-                <div className="h-4 bg-slate-800 rounded w-1/4 mb-4"></div>
-                <div className="h-6 bg-slate-800 rounded w-3/4 mb-2"></div>
+                <div className="h-6 bg-slate-800 rounded w-3/4 mb-4"></div>
                 <div className="h-4 bg-slate-800 rounded w-full mb-2"></div>
                 <div className="h-4 bg-slate-800 rounded w-2/3"></div>
               </div>
             ))}
           </div>
-        ) : filteredJobs.length > 0 ? (
+        ) : filteredCategories.length > 0 ? (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {currentJobs.map((job) => (
+              {currentCategories.map((cat) => (
                 <div 
-                  key={job.id} 
-                  className="glass-card glass-card-hover rounded-2xl p-6 flex flex-col justify-between"
+                  key={cat.id} 
+                  className="glass-card glass-card-hover rounded-2xl p-6 flex flex-col justify-between border-t-2 border-t-gold-500/20"
                 >
                   <div>
-                    <div className="flex items-start justify-between mb-4">
-                      <span className="inline-flex items-center rounded-lg bg-gold-500/10 px-2.5 py-1 text-xs font-semibold text-gold-400 border border-gold-500/20">
-                        {job.category?.name || "Uncategorized"}
-                      </span>
-                    </div>
-
-                    <h3 className="text-xl font-bold text-slate-100 hover:text-gold-400 transition-colors cursor-pointer mb-2">
-                      {job.position}
+                    <h3 className="text-2xl font-extrabold text-slate-100 mb-2">
+                      {cat.name}
                     </h3>
 
                     <p className="text-sm text-slate-400 line-clamp-3 mb-6 leading-relaxed">
-                      {job.description}
+                      {cat.description || "No description available."}
                     </p>
+                    
+                    <div className="flex flex-wrap gap-1.5 mb-6">
+                        {cat.positions.slice(0, 3).map(p => (
+                            <span key={p.id} className="text-[10px] px-2 py-0.5 rounded-full bg-slate-900 border border-slate-800 text-slate-400">
+                                {p.position}
+                            </span>
+                        ))}
+                        {cat.positions.length > 3 && (
+                            <span className="text-[10px] px-2 py-0.5 text-slate-500">+{cat.positions.length - 3} more</span>
+                        )}
+                    </div>
                   </div>
 
                   <div className="border-t border-slate-800/80 pt-4 mt-auto">
                     <div className="flex items-center justify-between mb-4 text-xs text-slate-400">
                       <span className="flex items-center">
                         <MapPin className="h-3.5 w-3.5 mr-1 text-slate-500" />
-                        {job.location}
+                        {cat.location || "Multiple Locations"}
+                      </span>
+                      <span className="text-gold-500/80 font-medium">
+                        {cat.positions.length} Active Positions
                       </span>
                     </div>
 
                     <button
-                      onClick={() => handleOpenApply(job)}
-                      className="w-full py-2.5 px-4 rounded-xl bg-linear-to-r from-gold-600 to-gold-700 hover:from-gold-500 hover:to-gold-600 text-white font-medium text-sm transition-all shadow-md hover:shadow-lg hover:shadow-gold-500/15 flex items-center justify-center space-x-2"
+                      onClick={() => handleOpenApply(cat)}
+                      className="w-full py-3 px-4 rounded-xl bg-linear-to-r from-gold-600 to-gold-700 hover:from-gold-500 hover:to-gold-600 text-white font-bold text-sm transition-all shadow-md hover:shadow-lg hover:shadow-gold-500/15 flex items-center justify-center space-x-2 hover:cursor-pointer"
                     >
-                      <span>Apply Now</span>
+                      <span>Apply for this Category</span>
                       <ArrowRight className="h-4 w-4" />
                     </button>
                   </div>
@@ -328,7 +381,7 @@ export default function Home() {
                 <button
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 disabled:opacity-50 text-sm font-medium hover:border-slate-600 transition-colors flex items-center gap-2"
+                  className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 disabled:opacity-50 text-sm font-medium hover:border-slate-600 transition-colors flex items-center gap-2 hover:cursor-pointer"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   Previous
@@ -339,7 +392,7 @@ export default function Home() {
                 <button
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 disabled:opacity-50 text-sm font-medium hover:border-slate-600 transition-colors flex items-center gap-2"
+                  className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 disabled:opacity-50 text-sm font-medium hover:border-slate-600 transition-colors flex items-center gap-2 hover:cursor-pointer"
                 >
                   Next
                   <ChevronRight className="h-4 w-4" />
@@ -350,16 +403,16 @@ export default function Home() {
         ) : (
           <div className="text-center py-16 glass-card rounded-2xl border border-dashed border-slate-800">
             <Briefcase className="h-12 w-12 text-slate-600 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-slate-300">No positions found</h3>
+            <h3 className="text-lg font-bold text-slate-300">No categories found</h3>
             <p className="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
-              We couldn't find any job matching "{searchTerm}". Try refining your search keywords or categories.
+              We couldn't find any job category matching "{searchTerm}".
             </p>
           </div>
         )}
       </main>
 
       {/* Slide-over or Modal Apply Form */}
-      {isModalOpen && selectedJob && (
+      {isModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="glass-card w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden border border-slate-800/80 flex flex-col max-h-[90vh]">
             
@@ -367,11 +420,11 @@ export default function Home() {
             <div className="px-6 py-4 border-b border-slate-800/80 bg-slate-900/60 flex items-center justify-between">
               <div>
                 <span className="text-xs font-semibold text-gold-400 tracking-wider uppercase">Application Form</span>
-                <h3 className="text-lg font-bold text-white mt-0.5">{selectedJob.position}</h3>
+                <h3 className="text-lg font-bold text-white mt-0.5">{selectedCategory?.name || "Quick Apply"}</h3>
               </div>
               <button 
                 onClick={() => setIsModalOpen(false)}
-                className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+                className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors hover:cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -386,11 +439,11 @@ export default function Home() {
                   </div>
                   <h4 className="text-2xl font-bold text-white">Application Submitted!</h4>
                   <p className="text-slate-400 mt-2 max-w-md mx-auto leading-relaxed">
-                    Thank you for applying, {formData.name || "candidate"}. We have received your application for the <strong>{selectedJob.position}</strong> role and our hiring team will review it shortly.
+                    Thank you for applying, {formData.name || "candidate"}. We have received your application and our hiring team will review it shortly.
                   </p>
                   <button
                     onClick={() => setIsModalOpen(false)}
-                    className="mt-8 px-6 py-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 font-medium text-sm transition-all"
+                    className="mt-8 px-6 py-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 font-medium text-sm transition-all hover:cursor-pointer"
                   >
                     Close Window
                   </button>
@@ -403,6 +456,70 @@ export default function Home() {
                       {errorMessage}
                     </div>
                   )}
+
+                  {/* Form section: Role Selection */}
+                  <div className="space-y-4">
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800 pb-2">
+                      Role Selection
+                    </h4>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Category Dropdown (Always shown for Quick Apply) */}
+                        <div>
+                            <label htmlFor="selectedCategoryId" className="block text-xs font-semibold text-slate-400 mb-1.5">Category *</label>
+                            <select
+                                id="selectedCategoryId"
+                                name="selectedCategoryId"
+                                required
+                                value={formData.selectedCategoryId}
+                                onChange={handleInputChange}
+                                className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none cursor-pointer"
+                            >
+                                <option value="" disabled>Select Category</option>
+                                {groupedCategories.map(cat => (
+                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                ))}
+                                <option value="general">Other / General</option>
+                            </select>
+                        </div>
+
+                        {/* Position Dropdown (Depends on Category) */}
+                        {formData.selectedCategoryId === "general" ? (
+                            <div>
+                                <label htmlFor="customPosition" className="block text-xs font-semibold text-gold-400 mb-1.5">Position Applied For *</label>
+                                <input
+                                id="customPosition"
+                                type="text"
+                                name="customPosition"
+                                required
+                                value={formData.customPosition}
+                                onChange={handleInputChange}
+                                placeholder="e.g. Senior Marketing Lead"
+                                className="w-full bg-gold-500/5 border border-gold-500/20 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none shadow-inner"
+                                />
+                            </div>
+                        ) : (
+                            <div>
+                                <label htmlFor="selectedPositionId" className="block text-xs font-semibold text-slate-400 mb-1.5">Specific Position *</label>
+                                <select
+                                    id="selectedPositionId"
+                                    name="selectedPositionId"
+                                    required
+                                    disabled={!formData.selectedCategoryId}
+                                    value={formData.selectedPositionId}
+                                    onChange={handleInputChange}
+                                    className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <option value="" disabled>Select Position</option>
+                                    {selectedCategory?.positions.map(p => (
+                                        <option key={p.id} value={p.id}>{p.position}</option>
+                                    ))}
+                                    <option value="general">Open to Suggestions</option>
+                                </select>
+                            </div>
+                        )}
+                    </div>
+                  </div>
 
                   {/* Form section: Personal Details */}
                   <div className="space-y-4">
@@ -471,6 +588,20 @@ export default function Home() {
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
+                        <label className="block text-xs font-semibold text-slate-400 mb-1.5">Gender *</label>
+                        <div className="flex gap-4">
+                            <label className="flex items-center gap-2 text-sm text-slate-300 hover:cursor-pointer">
+                                <input type="radio" name="gender" value="Male" checked={formData.gender === "Male"} onChange={handleInputChange} className="accent-gold-500" />
+                                Male
+                            </label>
+                            <label className="flex items-center gap-2 text-sm text-slate-300 hover:cursor-pointer">
+                                <input type="radio" name="gender" value="Female" checked={formData.gender === "Female"} onChange={handleInputChange} className="accent-gold-500" />
+                                Female
+                            </label>
+                        </div>
+                      </div>
+
+                      <div>
                         <label htmlFor="nationality" className="block text-xs font-semibold text-slate-400 mb-1.5">Nationality *</label>
                         <input
                           id="nationality"
@@ -497,22 +628,6 @@ export default function Home() {
                           className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
                         />
                       </div>
-                      
-                    {selectedJob.id === "general" && (
-                      <div>
-                        <label htmlFor="customPosition" className="block text-xs font-semibold text-gold-400 mb-1.5">Position Applied For *</label>
-                        <input
-                          id="customPosition"
-                          type="text"
-                          name="customPosition"
-                          required
-                          value={formData.customPosition}
-                          onChange={handleInputChange}
-                          placeholder="e.g. Senior Marketing Lead"
-                          className="w-full bg-gold-500/5 border border-gold-500/20 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none shadow-inner"
-                        />
-                      </div>
-                    )}
                     </div>
                   </div>
 
@@ -589,14 +704,14 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => setIsModalOpen(false)}
-                      className="px-5 py-2.5 rounded-xl border border-slate-850 hover:bg-slate-900 text-slate-400 hover:text-slate-200 text-sm font-semibold transition-all"
+                      className="px-5 py-2.5 rounded-xl border border-slate-850 hover:bg-slate-900 text-slate-400 hover:text-slate-200 text-sm font-semibold transition-all hover:cursor-pointer"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="px-6 py-2.5 rounded-xl bg-linear-to-r from-gold-600 to-gold-700 hover:from-gold-500 hover:to-gold-600 disabled:from-gold-800 disabled:to-gold-800 text-white font-semibold text-sm transition-all flex items-center space-x-2 shadow-lg shadow-gold-500/20"
+                      className="px-6 py-2.5 rounded-xl bg-linear-to-r from-gold-600 to-gold-700 hover:from-gold-500 hover:to-gold-600 disabled:from-gold-800 disabled:to-gold-800 text-white font-bold text-sm transition-all flex items-center space-x-2 shadow-lg shadow-gold-500/20 hover:cursor-pointer"
                     >
                       {isSubmitting ? (
                         <span>Submitting...</span>
