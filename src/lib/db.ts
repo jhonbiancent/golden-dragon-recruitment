@@ -11,14 +11,20 @@ export interface Applicant {
   id: string;
   name: string;
   email: string;
-  phone: string;
-  age: number;
+  whatsapp_number: string;
+  gender: string;
   nationality: string;
+  current_location: string;
+  positionId: string;
   positionTitle: string;
   expectedSalary: string;
   availability: string;
   passType: string;
-  resumeUrl: string;
+  linkedin?: string;
+  portfolio?: string;
+  resumeUrl?: string;
+  coverLetter: string;
+  noticePeriod: string;
   status: "applied" | "interviewing" | "rejected" | "hired";
   notes: RecruiterNote[];
   appliedAt: string;
@@ -26,8 +32,8 @@ export interface Applicant {
 
 export interface JobPosition {
   id: string;
-  title: string;
-  department: string;
+  position: string;
+  category: string;
   location: string;
   description: string;
   salaryRange?: string;
@@ -35,7 +41,7 @@ export interface JobPosition {
 }
 
 export async function addJob(newJob: Omit<JobPosition, "id" | "status">): Promise<JobPosition | null> {
-  const id = newJob.title.toLowerCase().replace(/\s+/g, '-');
+  const id = newJob.position.toLowerCase().replace(/\s+/g, '-');
   
   if (!isSupabaseConfigured()) {
     return null;
@@ -46,8 +52,8 @@ export async function addJob(newJob: Omit<JobPosition, "id" | "status">): Promis
       .from("jobs")
       .insert({
         id,
-        title: newJob.title,
-        department: newJob.department,
+        position: newJob.position,
+        category: newJob.category,
         location: newJob.location,
         description: newJob.description,
         salary_range: newJob.salaryRange || null,
@@ -75,8 +81,8 @@ export async function updateJob(id: string, updates: Partial<JobPosition>): Prom
     const { data, error } = await supabase
       .from("jobs")
       .update({
-        title: updates.title,
-        department: updates.department,
+        position: updates.position,
+        category: updates.category,
         location: updates.location,
         description: updates.description,
         salary_range: updates.salaryRange || null,
@@ -190,17 +196,21 @@ export async function getApplicants(): Promise<Applicant[]> {
         id: app.id,
         name: app.name,
         email: app.email,
-        phone: app.phone,
-        positionTitle: app.position_title,
-        age: app.age,
+        whatsapp_number: app.whatsapp_number,
+        gender: app.gender,
         nationality: app.nationality,
+        current_location: app.current_location,
+        positionTitle: app.position_title,
+        positionId: app.position_id,
         expectedSalary: app.expected_salary,
         availability: app.availability,
         passType: app.pass_type,
         resumeUrl: app.resume_url,
         status: app.status,
         notes: notesForApp,
-        appliedAt: app.applied_at
+        appliedAt: app.applied_at,
+        coverLetter: app.cover_letter,
+        noticePeriod: app.notice_period
       };
     });
   } catch (err) {
@@ -213,7 +223,7 @@ export async function addApplicant(newApplicant: Omit<Applicant, "id" | "status"
   const position = newApplicant.positionId ? await getJobById(newApplicant.positionId) : undefined;
   
   // If customPosition is provided, use it. Otherwise, fallback to the matched job title or "General Position"
-  const positionTitle = newApplicant.customPosition || (position ? position.title : "General Position");
+  const positionTitle = newApplicant.customPosition || (position ? position.position : "General Position");
   
   const id = `app-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   const appliedAt = new Date().toISOString();
@@ -239,16 +249,20 @@ export async function addApplicant(newApplicant: Omit<Applicant, "id" | "status"
       id: applicant.id,
       name: applicant.name,
       email: applicant.email,
-      phone: applicant.phone,
-      age: applicant.age,
+      whatsapp_number: applicant.whatsapp_number,
+      gender: applicant.gender,
       nationality: applicant.nationality,
+      current_location: applicant.current_location,
+      position_id: applicant.positionId,
       position_title: applicant.positionTitle,
       expected_salary: applicant.expectedSalary,
       availability: applicant.availability,
       pass_type: applicant.passType,
       resume_url: applicant.resumeUrl,
       status: "applied",
-      applied_at: appliedAt
+      applied_at: appliedAt,
+      cover_letter: applicant.coverLetter,
+      notice_period: applicant.noticePeriod
     });
 
     if (error) throw error;
@@ -343,4 +357,3 @@ export async function addApplicantNote(id: string, noteText: string): Promise<Re
     return null;
   }
 }
-

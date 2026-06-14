@@ -38,7 +38,10 @@ interface Applicant {
   id: string;
   name: string;
   email: string;
-  phone: string;
+  whatsapp_number: string;
+  gender: string;
+  nationality: string;
+  current_location: string;
   positionId: string;
   positionTitle: string;
   passType: string;
@@ -54,8 +57,8 @@ interface Applicant {
 
 interface JobPosition {
   id: string;
-  title: string;
-  department: string;
+  position: string;
+  category: string;
   location: string;
   description: string;
   salaryRange?: string;
@@ -88,8 +91,8 @@ export default function AdminDashboard() {
   const [sortConfig, setSortConfig] = useState<{ field: 'name' | 'positionTitle' | 'appliedAt', direction: 'asc' | 'desc' }>({ field: 'appliedAt', direction: 'desc' });
 
   const [jobFormData, setJobFormData] = useState({
-    title: "",
-    department: "",
+    position: "",
+    category: "",
     location: "",
     description: "",
     salaryRange: "",
@@ -113,8 +116,8 @@ export default function AdminDashboard() {
         setEditingJob(null);
         setShowSuccessModal(true);
         setJobFormData({
-          title: "",
-          department: "",
+          position: "",
+          category: "",
           location: "",
           description: "",
           salaryRange: "",
@@ -174,8 +177,8 @@ export default function AdminDashboard() {
   const editJob = (job: JobPosition) => {
     setEditingJob(job);
     setJobFormData({
-      title: job.title,
-      department: job.department,
+      position: job.position,
+      category: job.category,
       location: job.location,
       description: job.description,
       salaryRange: job.salaryRange || "",
@@ -271,11 +274,14 @@ export default function AdminDashboard() {
   };
 
   const downloadCSV = () => {
-    const headers = ["Name", "Email", "Phone", "Position", "Pass Type", "Status", "Applied At"];
+    const headers = ["Name", "Email", "WhatsApp Number", "Gender", "Nationality", "Location", "Position", "Pass Type", "Status", "Applied At"];
     const rows = applicants.map(app => [
         `"${app.name}"`,
         `"${app.email}"`,
-        `"${app.phone}"`,
+        `"${app.whatsapp_number}"`,
+        `"${app.gender}"`,
+        `"${app.nationality}"`,
+        `"${app.current_location}"`,
         `"${app.positionTitle}"`,
         `"${app.passType}"`,
         `"${app.status}"`,
@@ -383,7 +389,7 @@ export default function AdminDashboard() {
           {userRole === 'admin' && (
             <button 
                 onClick={() => { setActiveTab('accounts'); setCurrentPage(1); }}
-                className={`pb-3 px-6 text-sm font-bold ${activeTab === 'accounts' ? 'text-gold-400 border-b-2 border-b-gold-400' : 'text-slate-500'}`}
+                className={`pb-3 px-6 text-sm font-bold border-r border-slate-800 ${activeTab === 'accounts' ? 'text-gold-400 border-b-2 border-b-gold-400' : 'text-slate-500'}`}
             >
                 Accounts
             </button>
@@ -447,7 +453,7 @@ export default function AdminDashboard() {
                   >
                     <option value="all">All Positions</option>
                     {jobs.map(job => (
-                        <option key={job.id} value={job.id}>{job.title}</option>
+                        <option key={job.id} value={job.id}>{job.position}</option>
                     ))}
                   </select>
 
@@ -571,7 +577,7 @@ export default function AdminDashboard() {
              <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-bold text-white">Available Jobs</h3>
                 <button 
-                  onClick={() => { setIsJobModalOpen(true); setEditingJob(null); setJobFormData({ title: "", department: "", location: "", description: "", salaryRange: "" }); }}
+                  onClick={() => { setIsJobModalOpen(true); setEditingJob(null); setJobFormData({ position: "", category: "", location: "", description: "", salaryRange: "" }); }}
                   className="px-4 py-2.5 rounded-xl bg-gold-600 hover:bg-gold-500 hover:cursor-pointer text-white font-semibold text-sm transition-all flex items-center space-x-2"
                 >
                   <Plus className="h-4 w-4" />
@@ -584,7 +590,7 @@ export default function AdminDashboard() {
                   <thead>
                     <tr className="border-b border-slate-800 bg-slate-900/40 text-xs font-bold text-slate-400 uppercase tracking-wider">
                       <th className="py-4 px-6">Job Title</th>
-                      <th className="py-4 px-6">Department</th>
+                      <th className="py-4 px-6">Category</th>
                       <th className="py-4 px-6">Location</th>
                       <th className="py-4 px-6 text-right">Action</th>
                     </tr>
@@ -592,8 +598,8 @@ export default function AdminDashboard() {
                   <tbody className="divide-y divide-slate-800/60 text-sm">
                     {currentItems.map((job: any) => (
                       <tr key={job.id} className="hover:bg-slate-900/35 transition-colors">
-                        <td className="py-4.5 px-6 font-semibold text-slate-100">{job.title}</td>
-                        <td className="py-4.5 px-6 text-slate-300">{job.department}</td>
+                        <td className="py-4.5 px-6 font-semibold text-slate-100">{job.position}</td>
+                        <td className="py-4.5 px-6 text-slate-300">{job.category}</td>
                         <td className="py-4.5 px-6 text-slate-300">{job.location}</td>
                         <td className="py-4.5 px-6 text-right">
                           <button onClick={() => editJob(job)} className="p-1.5 hover:text-gold-400 hover:cursor-pointer"><Edit2 className="h-4 w-4" /></button>
@@ -608,7 +614,7 @@ export default function AdminDashboard() {
         )}
         
         {activeTab === 'accounts' && userRole === 'admin' && <AccountsTab />}
-
+        
         {/* Pagination Controls */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center space-x-4 py-4 border-t border-slate-800">
@@ -643,11 +649,11 @@ export default function AdminDashboard() {
             <form onSubmit={handleJobSubmit} className="space-y-4">
               <div className="relative">
                 <Briefcase className="absolute left-3 top-3.5 h-4 w-4 text-slate-500" />
-                <input type="text" placeholder="Job Title" required value={jobFormData.title} onChange={(e) => setJobFormData({...jobFormData, title: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-200" />
+                <input type="text" placeholder="Position" required value={jobFormData.position} onChange={(e) => setJobFormData({...jobFormData, position: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-200" />
               </div>
               <div className="relative">
                 <Layers className="absolute left-3 top-3.5 h-4 w-4 text-slate-500" />
-                <input type="text" placeholder="Department" required value={jobFormData.department} onChange={(e) => setJobFormData({...jobFormData, department: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-200" />
+                <input type="text" placeholder="Category" required value={jobFormData.category} onChange={(e) => setJobFormData({...jobFormData, category: e.target.value})} className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-slate-200" />
               </div>
               <div className="relative">
                 <MapPin className="absolute left-3 top-3.5 h-4 w-4 text-slate-500" />
@@ -748,7 +754,7 @@ export default function AdminDashboard() {
                   </div>
                   <div className="flex items-center space-x-3 text-sm text-slate-300">
                     <Phone className="h-4.5 w-4.5 text-slate-500 shrink-0" />
-                    <span>{selectedApplicant.phone}</span>
+                    <span>{selectedApplicant.whatsapp_number}</span>
                   </div>
                   <div className="flex items-center space-x-3 text-sm text-slate-300">
                     <Briefcase className="h-4.5 w-4.5 text-slate-500 shrink-0" />
@@ -758,7 +764,10 @@ export default function AdminDashboard() {
                     <span className="text-slate-500 text-xs font-bold shrink-0 uppercase w-4.5">PSS</span>
                     <span>Pass Type: {selectedApplicant.passType}</span>
                   </div>
-               
+                  <div className="flex items-center space-x-3 text-sm text-slate-300">
+                    <span className="text-slate-500 text-xs font-bold shrink-0 uppercase w-4.5">Ntc</span>
+                    <span>Notice Period: {selectedApplicant.noticePeriod}</span>
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-2 pt-2">
                   {selectedApplicant.linkedin && (

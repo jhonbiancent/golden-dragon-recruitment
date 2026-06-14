@@ -30,10 +30,18 @@ export async function loginAction(prevState: { error: string | null }, formData:
 
   // 2. Proceed with Supabase Login
   const supabase = await createClient()
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
     return { error: 'Invalid email or password' }
+  }
+
+  // Check for MFA factors
+  const { data: factors } = await supabase.auth.mfa.listFactors()
+  const hasMfa = factors?.all.some(f => f.status === 'verified')
+
+  if (hasMfa) {
+    redirect('/auth/mfa-authentication')
   }
 
   redirect('/admin')

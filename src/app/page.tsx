@@ -16,12 +16,11 @@ import {
   ChevronLeft,
   ChevronRight
 } from "lucide-react";
-// Removed import { getJobs } from "@/lib/db";
 
 interface JobPosition {
   id: string;
-  title: string;
-  department: string;
+  position: string;
+  category: string;
   location: string;
   description: string;
   salaryRange?: string;
@@ -46,14 +45,17 @@ export default function Home() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    phone: "",
+    whatsapp_number: "",
     resumeUrl: "",
     customPosition: "",
     age: "",
     nationality: "",
+    current_location: "",
     expectedSalary: "",
     availability: "",
     passType: "Singapore citizen",
+    coverLetter: "",
+    noticePeriod: "",
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -83,12 +85,12 @@ export default function Home() {
     setCurrentPage(1);
   }, [searchTerm, selectedDept]);
 
-  const departments = ["All", ...Array.from(new Set(jobs.map(j => j.department)))];
+  const departments = ["All", ...Array.from(new Set(jobs.map(j => j.category)))];
 
   const filteredJobs = jobs.filter(job => {
-    const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const matchesSearch = job.position.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           job.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDept = selectedDept === "All" || job.department === selectedDept;
+    const matchesDept = selectedDept === "All" || job.category === selectedDept;
     return matchesSearch && matchesDept;
   });
 
@@ -109,8 +111,8 @@ export default function Home() {
   const handleOpenGeneralApply = async () => {
     setSelectedJob({
       id: "general",
-      title: "General Application",
-      department: "General",
+      position: "General Application",
+      category: "General",
       location: "Remote / Multiple",
       description: "Submit your profile for future opportunities that match your skills.",
       status: "active",
@@ -139,7 +141,8 @@ export default function Home() {
         },
         body: JSON.stringify({
           ...formData,
-          positionId: selectedJob?.id,
+          positionId: selectedJob?.id === 'general' ? undefined : selectedJob?.id,
+          positionTitle: selectedJob?.id === 'general' ? formData.customPosition : selectedJob?.position,
         }),
       });
 
@@ -147,18 +150,20 @@ export default function Home() {
 
       if (response.ok) {
         setSubmitSuccess(true);
-        // Reset form
         setFormData({
-          name: "",
-          email: "",
-          phone: "",
-          resumeUrl: "",
-          customPosition: "",
-          age: "",
-          nationality: "",
-          expectedSalary: "",
-          availability: "",
-          passType: "Singapore citizen",
+            name: "",
+            email: "",
+            whatsapp_number: "",
+            resumeUrl: "",
+            customPosition: "",
+            age: "",
+            nationality: "",
+            current_location: "",
+            expectedSalary: "",
+            availability: "",
+            passType: "Singapore citizen",
+            coverLetter: "",
+            noticePeriod: "",
         });
       } else {
         setErrorMessage(data.error || "Failed to submit application.");
@@ -229,7 +234,7 @@ export default function Home() {
               <Search className="absolute left-4 top-3.5 h-5 w-5 text-slate-500" />
               <input
                 type="text"
-                placeholder="Search positions (e.g. Operations)..."
+                placeholder="Search positions..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full bg-transparent border-0 pl-11 pr-4 py-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-0 text-sm"
@@ -244,7 +249,7 @@ export default function Home() {
                 className="bg-slate-900 border border-slate-800 text-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-gold-500 cursor-pointer w-full md:w-auto"
               >
                 {departments.map(dept => (
-                  <option key={dept} value={dept}>{dept} Departments</option>
+                  <option key={dept} value={dept}>{dept} Categories</option>
                 ))}
               </select>
             </div>
@@ -258,24 +263,6 @@ export default function Home() {
           <div>
             <h2 className="text-2xl font-bold text-white tracking-tight">Open Positions</h2>
             <p className="text-sm text-slate-500 mt-1">Found {filteredJobs.length} opportunities for you</p>
-          </div>
-          
-          <div className="flex flex-wrap items-center space-x-2 bg-slate-900/60 border border-slate-800/80 rounded-xl p-1 text-xs text-slate-400 gap-y-2">
-            <button 
-              onClick={() => setSelectedDept("All")}
-              className={`px-3 py-1.5 rounded-lg border border-slate-700 transition-colors ${selectedDept === "All" ? "bg-gold-600 border-gold-600 text-white" : "hover:text-slate-200 hover:border-slate-600"}`}
-            >
-              All Openings
-            </button>
-            {departments.filter(d => d !== "All").map(dept => (
-              <button 
-                key={dept}
-                onClick={() => setSelectedDept(dept)}
-                className={`px-3 py-1.5 rounded-lg border border-slate-700 transition-colors ${selectedDept === dept ? "bg-gold-600 border-gold-600 text-white" : "hover:text-slate-200 hover:border-slate-600"}`}
-              >
-                {dept}
-              </button>
-            ))}
           </div>
         </div>
 
@@ -302,12 +289,12 @@ export default function Home() {
                   <div>
                     <div className="flex items-start justify-between mb-4">
                       <span className="inline-flex items-center rounded-lg bg-gold-500/10 px-2.5 py-1 text-xs font-semibold text-gold-400 border border-gold-500/20">
-                        {job.department}
+                        {job.category}
                       </span>
                     </div>
 
                     <h3 className="text-xl font-bold text-slate-100 hover:text-gold-400 transition-colors cursor-pointer mb-2">
-                      {job.title}
+                      {job.position}
                     </h3>
 
                     <p className="text-sm text-slate-400 line-clamp-3 mb-6 leading-relaxed">
@@ -364,9 +351,6 @@ export default function Home() {
           <div className="text-center py-16 glass-card rounded-2xl border border-dashed border-slate-800">
             <Briefcase className="h-12 w-12 text-slate-600 mx-auto mb-4" />
             <h3 className="text-lg font-bold text-slate-300">No positions found</h3>
-            <p className="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
-              We couldn't find any job matching "{searchTerm}". Try refining your search keywords or categories.
-            </p>
           </div>
         )}
       </main>
@@ -380,7 +364,7 @@ export default function Home() {
             <div className="px-6 py-4 border-b border-slate-800/80 bg-slate-900/60 flex items-center justify-between">
               <div>
                 <span className="text-xs font-semibold text-gold-400 tracking-wider uppercase">Application Form</span>
-                <h3 className="text-lg font-bold text-white mt-0.5">{selectedJob.title}</h3>
+                <h3 className="text-lg font-bold text-white mt-0.5">{selectedJob.position}</h3>
               </div>
               <button 
                 onClick={() => setIsModalOpen(false)}
@@ -399,7 +383,7 @@ export default function Home() {
                   </div>
                   <h4 className="text-2xl font-bold text-white">Application Submitted!</h4>
                   <p className="text-slate-400 mt-2 max-w-md mx-auto leading-relaxed">
-                    Thank you for applying, {formData.name || "candidate"}. We have received your application for the <strong>{selectedJob.title}</strong> role and our hiring team will review it shortly.
+                    Thank you for applying, {formData.name || "candidate"}. We have received your application for the <strong>{selectedJob.position}</strong> role and our hiring team will review it shortly.
                   </p>
                   <button
                     onClick={() => setIsModalOpen(false)}
@@ -453,15 +437,15 @@ export default function Home() {
                       </div>
 
                       <div>
-                        <label htmlFor="phone" className="block text-xs font-semibold text-slate-400 mb-1.5">Phone Number *</label>
+                        <label htmlFor="whatsapp_number" className="block text-xs font-semibold text-slate-400 mb-1.5">WhatsApp Number *</label>
                         <input
-                          id="phone"
+                          id="whatsapp_number"
                           type="tel"
-                          name="phone"
+                          name="whatsapp_number"
                           required
-                          value={formData.phone}
+                          value={formData.whatsapp_number}
                           onChange={handleInputChange}
-                          placeholder="+1 (555) 000-0000"
+                          placeholder="+65 0000 0000"
                           className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
                         />
                       </div>
@@ -493,6 +477,20 @@ export default function Home() {
                           value={formData.nationality}
                           onChange={handleInputChange}
                           placeholder="e.g. Singaporean"
+                          className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor="current_location" className="block text-xs font-semibold text-slate-400 mb-1.5">Current Location *</label>
+                        <input
+                          id="current_location"
+                          type="text"
+                          name="current_location"
+                          required
+                          value={formData.current_location}
+                          onChange={handleInputChange}
+                          placeholder="e.g. Singapore"
                           className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
                         />
                       </div>

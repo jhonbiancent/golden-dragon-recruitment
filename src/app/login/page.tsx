@@ -51,7 +51,7 @@ export default function LoginPage() {
         <button 
             type="submit" 
             disabled={isPending || !token} 
-            className="w-full py-3 rounded-xl bg-gold-600 hover:bg-gold-500 text-white font-semibold text-sm disabled:opacity-50"
+            className="w-full py-3 rounded-xl bg-gold-600 hover:bg-gold-500 hover:cursor-pointer text-white font-semibold text-sm disabled:opacity-50"
         >
           {isPending ? 'Logging in...' : 'Login'}
         </button>
