@@ -14,7 +14,8 @@ import {
   Layers,
   ArrowUpRight,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Upload
 } from "lucide-react";
 
 interface JobPosition {
@@ -56,8 +57,7 @@ export default function Home() {
     name: "",
     email: "",
     whatsapp_number: "",
-    resumeUrl: "",
-    selectedCategoryId: "", // Added for Quick Apply logic
+    selectedCategoryId: "",
     selectedPositionId: "", 
     customPosition: "",
     age: "",
@@ -70,6 +70,8 @@ export default function Home() {
     coverLetter: "",
     noticePeriod: "",
   });
+
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -138,6 +140,7 @@ export default function Home() {
     setIsModalOpen(true);
     setSubmitSuccess(false);
     setErrorMessage("");
+    setResumeFile(null);
     setFormData(prev => ({ 
         ...prev, 
         selectedCategoryId: cat.id,
@@ -147,11 +150,11 @@ export default function Home() {
   };
 
   const handleOpenGeneralApply = () => {
-    // Quick Apply logic: Start with no category selected or "General"
     setSelectedCategory(null);
     setIsModalOpen(true);
     setSubmitSuccess(false);
     setErrorMessage("");
+    setResumeFile(null);
     setFormData(prev => ({ 
         ...prev, 
         selectedCategoryId: "", 
@@ -176,12 +179,51 @@ export default function Home() {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files[0]) {
+          const file = e.target.files[0];
+          if (file.type !== "application/pdf") {
+              alert("Please upload only PDF files.");
+              e.target.value = "";
+              return;
+          }
+          if (file.size > 5 * 1024 * 1024) {
+              alert("File size must be less than 5MB.");
+              e.target.value = "";
+              return;
+          }
+          setResumeFile(file);
+      }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!resumeFile) {
+        setErrorMessage("Please upload your resume.");
+        return;
+    }
+
     setIsSubmitting(true);
     setErrorMessage("");
 
     try {
+      // 1. Upload Resume
+      const fileData = new FormData();
+      fileData.append("file", resumeFile);
+      
+      const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          body: fileData
+      });
+      
+      if (!uploadRes.ok) {
+          const errorData = await uploadRes.json();
+          throw new Error(errorData.error || "Failed to upload resume.");
+      }
+      
+      const { filePath } = await uploadRes.json();
+
+      // 2. Submit Application
       const activeCat = selectedCategory || groupedCategories.find(c => c.id === formData.selectedCategoryId);
       const selectedPos = activeCat?.positions.find(p => p.id === formData.selectedPositionId);
       
@@ -199,6 +241,7 @@ export default function Home() {
           ...formData,
           positionId: formData.selectedPositionId === 'general' ? undefined : formData.selectedPositionId,
           positionTitle: positionTitle,
+          resumeUrl: filePath // Use the secure storage path
         }),
       });
 
@@ -206,11 +249,11 @@ export default function Home() {
 
       if (response.ok) {
         setSubmitSuccess(true);
+        setResumeFile(null);
         setFormData({
             name: "",
             email: "",
             whatsapp_number: "",
-            resumeUrl: "",
             selectedCategoryId: "",
             selectedPositionId: "",
             customPosition: "",
@@ -227,8 +270,8 @@ export default function Home() {
       } else {
         setErrorMessage(data.error || "Failed to submit application.");
       }
-    } catch (err) {
-      setErrorMessage("Something went wrong. Please check your connection and try again.");
+    } catch (err: any) {
+      setErrorMessage(err.message || "Something went wrong. Please check your connection and try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -685,17 +728,22 @@ export default function Home() {
                     </div>
 
                     <div>
-                      <label htmlFor="resumeUrl" className="block text-xs font-semibold text-slate-400 mb-1.5">Resume / CV Link *</label>
-                      <input
-                        id="resumeUrl"
-                        type="url"
-                        name="resumeUrl"
-                        required
-                        value={formData.resumeUrl}
-                        onChange={handleInputChange}
-                        placeholder="Link to hosted Resume PDF"
-                        className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
-                      />
+                      <label htmlFor="resumeFile" className="block text-xs font-semibold text-slate-400 mb-1.5">Resume / CV (PDF strictly) *</label>
+                      <div className="relative group">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <Upload className="h-4 w-4 text-slate-500 group-hover:text-gold-400 transition-colors" />
+                        </div>
+                        <input
+                            id="resumeFile"
+                            type="file"
+                            name="resumeFile"
+                            accept=".pdf"
+                            required
+                            onChange={handleFileChange}
+                            className="w-full bg-slate-900/60 border border-slate-800 focus:border-gold-500 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-200 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-gold-500/10 file:text-gold-400 hover:file:bg-gold-500/20 transition-all cursor-pointer"
+                        />
+                      </div>
+                      <p className="text-[10px] text-slate-500 mt-1.5">Strictly PDF only. Maximum size 5MB.</p>
                     </div>
                   </div>
 
