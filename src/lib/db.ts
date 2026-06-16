@@ -24,8 +24,6 @@ export interface Applicant {
   linkedin?: string;
   portfolio?: string;
   resumeUrl?: string;
-  coverLetter: string;
-  noticePeriod: string;
   status: "applied" | "interviewing" | "rejected" | "hired";
   notes: RecruiterNote[];
   appliedAt: string;
