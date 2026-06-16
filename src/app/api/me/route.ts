@@ -9,5 +9,6 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  return NextResponse.json({ role: user.user_metadata.role })
+  const role = user?.app_metadata?.role || user?.user_metadata?.role;
+  return NextResponse.json({ id: user.id, role })
 }

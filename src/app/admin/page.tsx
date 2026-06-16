@@ -78,12 +78,14 @@ export default function AdminDashboard() {
   const [jobs, setJobs] = useState<JobPosition[]>([]);
   const [categories, setCategories] = useState<JobCategory[]>([]);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [positionFilter, setPositionFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [appCategoryFilter, setAppCategoryFilter] = useState("all");
   const [noteText, setNoteText] = useState("");
   const [savingNote, setSavingNote] = useState(false);
   const [savingStatus, setSavingStatus] = useState(false);
@@ -127,6 +129,7 @@ export default function AdminDashboard() {
       setJobs(jobsData.jobs || []);
       setCategories(catData.categories || []);
       setUserRole(meData.role || null);
+      setUserId(meData.id || null);
     } catch (error) {
       console.error("Failed to load data:", error);
     } finally {
@@ -290,7 +293,11 @@ export default function AdminDashboard() {
                           app.positionTitle.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || app.status === statusFilter;
     const matchesPosition = positionFilter === "all" || app.positionId === positionFilter;
-    return matchesSearch && matchesStatus && matchesPosition;
+    
+    const job = jobs.find(j => j.id === app.positionId);
+    const matchesCategory = appCategoryFilter === "all" || (job && job.category_id === appCategoryFilter);
+    
+    return matchesSearch && matchesStatus && matchesPosition && matchesCategory;
   });
 
   const filteredJobs = jobs.filter(job => {
@@ -321,7 +328,7 @@ export default function AdminDashboard() {
               <ClipboardList className="h-5 w-5 text-white" />
             </a>
             <div>
-              <span className="text-sm font-semibold text-slate-400 tracking-wider uppercase block leading-none">Internal ATS</span>
+              <span className="text-sm font-semibold text-slate-400 tracking-wider uppercase block leading-none">Applicant Tracking System</span>
               <span className="text-lg font-bold text-white mt-1">Recruiter Dashboard</span>
             </div>
           </div>
@@ -496,7 +503,7 @@ export default function AdminDashboard() {
           </section>
         )}
         
-        {activeTab === 'accounts' && userRole === 'admin' && <AccountsTab />}
+        {activeTab === 'accounts' && userRole === 'admin' && <AccountsTab currentUserId={userId} />}
         
         {totalPages > 1 && (
           <div className="flex justify-center items-center space-x-4 py-4 border-t border-slate-800">
