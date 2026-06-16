@@ -50,7 +50,6 @@ interface Applicant {
   portfolio?: string;
   resumeUrl?: string;
   coverLetter: string;
-  noticePeriod: string;
   status: "applied" | "interviewing" | "rejected" | "hired";
   notes: RecruiterNote[];
   appliedAt: string;
@@ -67,7 +66,7 @@ interface JobPosition {
   id: string;
   category_id: string;
   position: string;
-  salaryRange?: string;
+  salary_range?: string;
   status: "active" | "closed";
   category?: { id: string; name: string; description: string; location: string };
 }
@@ -94,6 +93,11 @@ export default function AdminDashboard() {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showCategorySuccessModal, setShowCategorySuccessModal] = useState(false);
+  
+  // Processing states for modal buttons
+  const [isSavingPosition, setIsSavingPosition] = useState(false);
+  const [isSavingCategory, setIsSavingCategory] = useState(false);
+
   const [editingJob, setEditingJob] = useState<JobPosition | null>(null);
   const [editingCategory, setEditingCategory] = useState<JobCategory | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{type: 'job' | 'applicant' | 'category', id: string} | null>(null);
@@ -183,26 +187,36 @@ export default function AdminDashboard() {
 
   const handleJobSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const url = `/api/jobs`;
-    const method = editingJob ? 'PATCH' : 'POST';
-    const body = editingJob ? { id: editingJob.id, ...jobFormData } : jobFormData;
-    const response = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    if (response.ok) {
-        setIsJobModalOpen(false); setEditingJob(null); setJobFormData({ categoryId: "", position: "", salaryRange: "" });
-        await fetchData(); setShowSuccessModal(true);
-    } else alert("Failed to save.");
+    setIsSavingPosition(true);
+    try {
+        const url = `/api/jobs`;
+        const method = editingJob ? 'PATCH' : 'POST';
+        const body = editingJob ? { id: editingJob.id, ...jobFormData } : jobFormData;
+        const response = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        if (response.ok) {
+            setIsJobModalOpen(false); setEditingJob(null); setJobFormData({ categoryId: "", position: "", salaryRange: "" });
+            await fetchData(); setShowSuccessModal(true);
+        } else alert("Failed to save position.");
+    } finally {
+        setIsSavingPosition(false);
+    }
   };
 
   const handleCategorySubmit = async (e: React.FormEvent) => {
       e.preventDefault();
-      const url = `/api/jobs`;
-      const method = editingCategory ? 'PATCH' : 'POST';
-      const body = editingCategory ? { id: editingCategory.id, ...catFormData, type: 'category' } : {...catFormData, type: 'category'};
-      const response = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-      if (response.ok) {
-          setIsCategoryModalOpen(false); setEditingCategory(null); setCatFormData({ name: "", description: "", location: "" });
-          await fetchData(); setShowCategorySuccessModal(true);
-      } else alert("Failed to save.");
+      setIsSavingCategory(true);
+      try {
+          const url = `/api/jobs`;
+          const method = editingCategory ? 'PATCH' : 'POST';
+          const body = editingCategory ? { id: editingCategory.id, ...catFormData, type: 'category' } : {...catFormData, type: 'category'};
+          const response = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+          if (response.ok) {
+              setIsCategoryModalOpen(false); setEditingCategory(null); setCatFormData({ name: "", description: "", location: "" });
+              await fetchData(); setShowCategorySuccessModal(true);
+          } else alert("Failed to save category.");
+      } finally {
+          setIsSavingCategory(false);
+      }
   };
 
   const confirmDelete = async () => {
@@ -220,7 +234,7 @@ export default function AdminDashboard() {
 
   const editJob = (job: JobPosition) => {
     setEditingJob(job);
-    setJobFormData({ position: job.position, categoryId: job.category_id, salaryRange: job.salaryRange || "" });
+    setJobFormData({ position: job.position, categoryId: job.category_id, salaryRange: job.salary_range || "" });
     setIsJobModalOpen(true);
   }
 
@@ -270,10 +284,6 @@ export default function AdminDashboard() {
     hired: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
   };
 
-  const totalCount = applicants.length;
-  const interviewingCount = applicants.filter(a => a.status === "interviewing").length;
-  const hiredCount = applicants.filter(a => a.status === "hired").length;
-
   const filteredApplicants = applicants.filter(app => {
     const matchesSearch = app.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           app.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -300,13 +310,10 @@ export default function AdminDashboard() {
 
   const totalPages = Math.ceil(paginationSource.length / ITEMS_PER_PAGE);
   const indexOfFirst = (currentPage - 1) * ITEMS_PER_PAGE;
-  const indexOfLast = indexOfFirst + ITEMS_PER_PAGE;
-  const currentItems = paginationSource.slice(indexOfFirst, indexOfLast);
+  const currentItems = paginationSource.slice(indexOfFirst, indexOfFirst + ITEMS_PER_PAGE);
 
   return (
     <div className="min-h-screen bg-[#070b15] text-slate-100 flex flex-col font-sans">
-      
-      {/* Admin Header */}
       <header className="sticky top-0 z-40 w-full border-b border-slate-800 bg-[#070b15]/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -319,69 +326,34 @@ export default function AdminDashboard() {
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            <a href="/" className="text-xs px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 font-medium transition-colors">
+            <a href="/" className="text-xs px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 font-medium transition-colors hover:cursor-pointer">
               Candidate View
             </a>
           </div>
         </div>
       </header>
 
-      {/* Main Body */}
       <main className="grow max-w-7xl w-full mx-auto px-6 py-10 space-y-8">
-        
-        {/* Tabs */}
         <div className="flex border-b border-slate-800">
-          <button 
-            onClick={() => { setActiveTab('applicants'); setCurrentPage(1); }}
-            className={`pb-3 px-6 text-sm font-bold border-r border-slate-800 ${activeTab === 'applicants' ? 'text-gold-400 border-b-2 border-b-gold-400' : 'text-slate-500'}`}
-          >
-            Applicants
-          </button>
-          <button 
-            onClick={() => { setActiveTab('jobs'); setCurrentPage(1); }}
-            className={`pb-3 px-6 text-sm font-bold border-r border-slate-800 ${activeTab === 'jobs' ? 'text-gold-400 border-b-2 border-b-gold-400' : 'text-slate-500'}`}
-          >
-            Jobs
-          </button>
-          {userRole === 'admin' && (
-            <button 
-                onClick={() => { setActiveTab('accounts'); setCurrentPage(1); }}
-                className={`pb-3 px-6 text-sm font-bold border-r border-slate-800 ${activeTab === 'accounts' ? 'text-gold-400 border-b-2 border-b-gold-400' : 'text-slate-500'}`}
-            >
-                Accounts
-            </button>
-          )}
+          <button onClick={() => { setActiveTab('applicants'); setCurrentPage(1); }} className={`pb-3 px-6 text-sm font-bold border-r border-slate-800 hover:cursor-pointer ${activeTab === 'applicants' ? 'text-gold-400 border-b-2 border-b-gold-400' : 'text-slate-500'}`}>Applicants</button>
+          <button onClick={() => { setActiveTab('jobs'); setCurrentPage(1); }} className={`pb-3 px-6 text-sm font-bold border-r border-slate-800 hover:cursor-pointer ${activeTab === 'jobs' ? 'text-gold-400 border-b-2 border-b-gold-400' : 'text-slate-500'}`}>Jobs</button>
+          {userRole === 'admin' && <button onClick={() => { setActiveTab('accounts'); setCurrentPage(1); }} className={`pb-3 px-6 text-sm font-bold border-r border-slate-800 hover:cursor-pointer ${activeTab === 'accounts' ? 'text-gold-400 border-b-2 border-b-gold-400' : 'text-slate-500'}`}>Accounts</button>}
         </div>
 
         {activeTab === 'applicants' && (
           <>
             <section className="flex flex-row flex-wrap gap-5">
               <div className="glass-card rounded-2xl p-5 flex items-center space-x-4 flex-1 min-w-50">
-                <div className="h-12 w-12 rounded-xl bg-gold-500/10 border border-gold-500/25 flex items-center justify-center text-gold-400">
-                  <Users className="h-6 w-6" />
-                </div>
-                <div>
-                  <span className="text-xs font-medium text-slate-500 block">Total Applications</span>
-                  <span className="text-2xl font-extrabold text-white mt-0.5">{totalCount}</span>
-                </div>
+                <div className="h-12 w-12 rounded-xl bg-gold-500/10 border border-gold-500/25 flex items-center justify-center text-gold-400"><Users className="h-6 w-6" /></div>
+                <div><span className="text-xs font-medium text-slate-500 block">Total Applications</span><span className="text-2xl font-extrabold text-white mt-0.5">{applicants.length}</span></div>
               </div>
               <div className="glass-card rounded-2xl p-5 flex items-center space-x-4 flex-1 min-w-50">
-                <div className="h-12 w-12 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-400">
-                  <TrendingUp className="h-6 w-6" />
-                </div>
-                <div>
-                  <span className="text-xs font-medium text-slate-500 block">Interviewing</span>
-                  <span className="text-2xl font-extrabold text-white mt-0.5">{interviewingCount}</span>
-                </div>
+                <div className="h-12 w-12 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-400"><TrendingUp className="h-6 w-6" /></div>
+                <div><span className="text-xs font-medium text-slate-500 block">Interviewing</span><span className="text-2xl font-extrabold text-white mt-0.5">{applicants.filter(a => a.status === 'interviewing').length}</span></div>
               </div>
               <div className="glass-card rounded-2xl p-5 flex items-center space-x-4 flex-1 min-w-50">
-                <div className="h-12 w-12 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-400">
-                  <UserCheck className="h-6 w-6" />
-                </div>
-                <div>
-                  <span className="text-xs font-medium text-slate-500 block">Successfully Hired</span>
-                  <span className="text-2xl font-extrabold text-emerald-400 mt-0.5">{hiredCount}</span>
-                </div>
+                <div className="h-12 w-12 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-400"><UserCheck className="h-6 w-6" /></div>
+                <div><span className="text-xs font-medium text-slate-500 block">Successfully Hired</span><span className="text-2xl font-extrabold text-emerald-400 mt-0.5">{applicants.filter(a => a.status === 'hired').length}</span></div>
               </div>
             </section>
 
@@ -389,30 +361,21 @@ export default function AdminDashboard() {
               <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
                 <div className="relative w-full md:max-w-md flex-1">
                   <Search className="absolute left-4 top-3.5 h-4 w-4 text-slate-500" />
-                  <input
-                    type="text"
-                    placeholder="Search candidates..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-slate-900/60 border border-slate-800 rounded-xl pl-11 pr-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-gold-500"
-                  />
+                  <input type="text" placeholder="Search candidates..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-slate-900/60 border border-slate-800 rounded-xl pl-11 pr-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-gold-500" />
                 </div>
-
                 <div className="flex items-center space-x-1.5 overflow-x-auto w-full md:w-auto p-2 bg-slate-950/80 border border-slate-800/80 rounded-xl">
-                  <select value={positionFilter} onChange={(e) => setPositionFilter(e.target.value)} className="bg-slate-900 border border-slate-700 text-xs px-2 py-1.5 rounded-lg text-slate-400">
+                  <select value={positionFilter} onChange={(e) => setPositionFilter(e.target.value)} className="bg-slate-900 border border-slate-700 text-xs px-2 py-1.5 rounded-lg text-slate-400 hover:cursor-pointer">
                     <option value="all">All Positions</option>
                     {jobs.map(job => <option key={job.id} value={job.id}>{job.position}</option>)}
                   </select>
-                  <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-slate-900 border border-slate-700 text-xs px-2 py-1.5 rounded-lg text-slate-400 capitalize">
+                  <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-slate-900 border border-slate-700 text-xs px-2 py-1.5 rounded-lg text-slate-400 capitalize hover:cursor-pointer">
                     <option value="all">All Statuses</option>
                     <option value="applied">Applied</option>
                     <option value="interviewing">Interviewing</option>
                     <option value="hired">Hired</option>
                     <option value="rejected">Rejected</option>
                   </select>
-                  <button onClick={downloadCSV} className="px-3 py-1.5 rounded-lg bg-emerald-400 hover:bg-emerald-700 hover:cursor-pointer text-white text-xs font-semibold flex items-center space-x-1">
-                    <Download className="h-3 w-3" /><span>Export</span>
-                  </button>
+                  <button onClick={downloadCSV} className="px-3 py-1.5 rounded-lg bg-emerald-400 hover:bg-emerald-700 hover:cursor-pointer text-white text-xs font-semibold flex items-center space-x-1"><Download className="h-3 w-3" /><span>Export</span></button>
                 </div>
               </div>
 
@@ -453,8 +416,8 @@ export default function AdminDashboard() {
         {activeTab === 'jobs' && (
           <section className="glass-card rounded-2xl p-6 shadow-xl">
              <div className="flex border-b border-slate-800 mb-6 gap-4">
-                <button onClick={() => { setActiveJobsTab('positions'); setCurrentPage(1); }} className={`pb-3 text-sm font-bold ${activeJobsTab === 'positions' ? 'text-gold-400 border-b-2 border-gold-400' : 'text-slate-500'}`}>Positions</button>
-                <button onClick={() => { setActiveJobsTab('categories'); setCurrentPage(1); }} className={`pb-3 text-sm font-bold ${activeJobsTab === 'categories' ? 'text-gold-400 border-b-2 border-gold-400' : 'text-slate-500'}`}>Categories</button>
+                <button onClick={() => { setActiveJobsTab('positions'); setCurrentPage(1); }} className={`pb-3 text-sm font-bold hover:cursor-pointer ${activeJobsTab === 'positions' ? 'text-gold-400 border-b-2 border-gold-400' : 'text-slate-500'}`}>Positions</button>
+                <button onClick={() => { setActiveJobsTab('categories'); setCurrentPage(1); }} className={`pb-3 text-sm font-bold hover:cursor-pointer ${activeJobsTab === 'categories' ? 'text-gold-400 border-b-2 border-gold-400' : 'text-slate-500'}`}>Categories</button>
              </div>
              
              {activeJobsTab === 'positions' ? (
@@ -468,17 +431,7 @@ export default function AdminDashboard() {
                           </select>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            <button onClick={() => { setIsCategoryModalOpen(true); setEditingCategory(null); setCatFormData({ name: "", description: "", location: "" }); }} className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-sm transition-all flex items-center space-x-2 hover:cursor-pointer flex-shrink-0">
-                                <Plus className="h-4 w-4" />
-                                <span>Create Job Category</span>
-                            </button>
-                            <button 
-                                onClick={() => { setIsJobModalOpen(true); setEditingJob(null); setJobFormData({ position: "", categoryId: "", salaryRange: "" }); }}
-                                className="px-4 py-2.5 rounded-xl bg-gold-600 hover:bg-gold-500 hover:cursor-pointer text-white font-semibold text-sm transition-all flex items-center space-x-2 flex-shrink-0"
-                            >
-                                <Plus className="h-4 w-4" />
-                                <span>Create New Position</span>
-                            </button>
+                            <button onClick={() => { setIsJobModalOpen(true); setEditingJob(null); setJobFormData({ position: "", categoryId: "", salaryRange: "" }); }} className="px-4 py-2.5 rounded-xl bg-gold-600 hover:bg-gold-500 hover:cursor-pointer text-white font-semibold text-sm transition-all flex items-center space-x-2 shrink-0"><Plus className="h-4 w-4" /><span>Create New Position</span></button>
                         </div>
                     </div>
                     <div className="overflow-x-auto rounded-xl border border-slate-800/80 bg-slate-950/20">
@@ -487,6 +440,7 @@ export default function AdminDashboard() {
                                 <tr className="border-b border-slate-800 bg-slate-900/40 text-xs font-bold text-slate-400 uppercase tracking-wider">
                                     <th className="py-4 px-6">Position</th>
                                     <th className="py-4 px-6">Category</th>
+                                    <th className="py-4 px-6">Salary Range</th>
                                     <th className="py-4 px-6 text-right">Action</th>
                                 </tr>
                             </thead>
@@ -495,6 +449,7 @@ export default function AdminDashboard() {
                                     <tr key={job.id} className="hover:bg-slate-900/35 transition-colors">
                                         <td className="py-4.5 px-6 font-semibold text-slate-100">{job.position}</td>
                                         <td className="py-4.5 px-6 text-slate-300">{job.category?.name || 'N/A'}</td>
+                                        <td className="py-4.5 px-6 text-slate-400">{job.salary_range || 'Not Specified'}</td>
                                         <td className="py-4.5 px-6 text-right">
                                             <button onClick={() => editJob(job)} className="p-1.5 hover:text-gold-400 hover:cursor-pointer transition-colors"><Edit2 className="h-4 w-4" /></button>
                                             <button onClick={() => setDeleteConfirmation({type: 'job', id: job.id})} className="p-1.5 hover:text-rose-400 hover:cursor-pointer transition-colors"><Trash2 className="h-4 w-4" /></button>
@@ -522,10 +477,10 @@ export default function AdminDashboard() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-800/60 text-sm">
-                                {currentItems.map((cat: JobCategory) => (
+                                {currentItems.map((cat: any) => (
                                     <tr key={cat.id} className="hover:bg-slate-900/35 transition-colors">
                                         <td className="py-4.5 px-6 text-slate-100 font-semibold">{cat.name}</td>
-                                        <td className="py-4.5 px-6 text-slate-300">{cat.description}</td>
+                                        <td className="py-4.5 px-6 text-slate-300 line-clamp-1 max-w-xs">{cat.description}</td>
                                         <td className="py-4.5 px-6 text-slate-300">{cat.location}</td>
                                         <td className="py-4.5 px-6 text-right">
                                             <button onClick={() => editCategory(cat)} className="p-1.5 hover:text-gold-400 hover:cursor-pointer transition-colors"><Edit2 className="h-4 w-4" /></button>
@@ -575,7 +530,14 @@ export default function AdminDashboard() {
               </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setIsJobModalOpen(false)} className="px-4 py-2 rounded-xl text-slate-400 hover:text-slate-200 text-sm hover:cursor-pointer">Cancel</button>
-                <button type="submit" className="px-4 py-2 rounded-xl bg-gold-600 hover:bg-gold-500 text-white text-sm font-semibold hover:cursor-pointer">{editingJob ? "Save Changes" : "Create Position"}</button>
+              <button type="submit" disabled={isSavingPosition} className="px-4 py-2 rounded-xl bg-gold-600 hover:bg-gold-500 text-white text-sm font-semibold hover:cursor-pointer flex items-center gap-2">
+                  {isSavingPosition && <Loader2 className="h-3 w-3 animate-spin" />}
+                  <span>
+                      {isSavingPosition
+                          ? (editingJob ? "Saving Changes" : "Creating Position")
+                          : (editingJob ? "Save Changes" : "Create Position")}
+                  </span>
+              </button>
               </div>
             </form>
           </div>
@@ -601,7 +563,14 @@ export default function AdminDashboard() {
               </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setIsCategoryModalOpen(false)} className="px-4 py-2 rounded-xl text-slate-400 hover:text-slate-200 text-sm hover:cursor-pointer">Cancel</button>
-                <button type="submit" className="px-4 py-2 rounded-xl bg-gold-600 hover:bg-gold-500 text-white text-sm font-semibold hover:cursor-pointer">{editingCategory ? "Save Changes" : "Create Category"}</button>
+              <button type="submit" disabled={isSavingCategory} className="px-4 py-2 rounded-xl bg-gold-600 hover:bg-gold-500 text-white text-sm font-semibold hover:cursor-pointer flex items-center gap-2">
+                  {isSavingCategory && <Loader2 className="h-3 w-3 animate-spin" />}
+                  <span>
+                      {isSavingCategory
+                          ? (editingCategory ? "Saving Changes" : "Creating Category")
+                          : (editingCategory ? "Save Changes" : "Create Category")}
+                  </span>
+              </button>
               </div>
             </form>
           </div>
@@ -609,7 +578,7 @@ export default function AdminDashboard() {
       )}
 
       {deleteConfirmation && (
-        <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-100 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="glass-card w-full max-w-sm rounded-2xl p-6 border border-slate-800 text-center">
             <AlertTriangle className="h-12 w-12 text-rose-500 mx-auto mb-4" />
             <h3 className="text-lg font-bold text-white mb-2 capitalize">Delete {deleteConfirmation.type}?</h3>
@@ -623,7 +592,7 @@ export default function AdminDashboard() {
       )}
 
       {showCategorySuccessModal && (
-        <div className="fixed inset-0 z-[120] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 h-full w-full">
+        <div className="fixed inset-0 z-120 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 h-full w-full">
           <div className="glass-card w-full max-w-sm rounded-2xl p-6 border border-slate-800 text-center">
             <div className="mx-auto h-12 w-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4"><UserCheck className="h-6 w-6 text-emerald-400" /></div>
             <h3 className="text-lg font-bold text-white mb-2">Success</h3>
@@ -674,7 +643,6 @@ export default function AdminDashboard() {
                   <div className="flex items-center space-x-3 text-sm text-slate-300"><Phone className="h-4 w-4 text-slate-500 shrink-0" /><span>{selectedApplicant.whatsapp_number}</span></div>
                   <div className="flex items-center space-x-3 text-sm text-slate-300"><Briefcase className="h-4 w-4 text-slate-500 shrink-0" /><span>Applying for: <strong>{selectedApplicant.positionTitle}</strong></span></div>
                   <div className="flex items-center space-x-3 text-sm text-slate-300"><span className="text-slate-500 text-xs font-bold shrink-0 uppercase">PSS</span><span>Pass Type: {selectedApplicant.passType}</span></div>
-                  <div className="flex items-center space-x-3 text-sm text-slate-300"><span className="text-slate-500 text-xs font-bold shrink-0 uppercase">Ntc</span><span>Notice Period: {selectedApplicant.noticePeriod}</span></div>
                 </div>
                 <div className="flex flex-wrap gap-2 pt-2">
                   {selectedApplicant.linkedin && <a href={selectedApplicant.linkedin} target="_blank" rel="noreferrer" className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-gold-500/10 text-gold-400 border border-gold-500/20 text-xs font-semibold hover:bg-gold-500/20 transition-colors"><span>LinkedIn</span><ExternalLink className="h-3 w-3" /></a>}
@@ -682,7 +650,7 @@ export default function AdminDashboard() {
                     <button 
                       onClick={() => handleDownloadResume(selectedApplicant.resumeUrl!)}
                       disabled={fetchingResume}
-                      className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-semibold hover:bg-emerald-500/20 transition-colors disabled:opacity-50 disabled:cursor-wait"
+                      className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-semibold hover:bg-emerald-500/20 transition-colors disabled:opacity-50 disabled:cursor-wait hover:cursor-pointer"
                     >
                       {fetchingResume ? <Loader2 className="h-3 w-3 animate-spin" /> : <ExternalLink className="h-3 w-3" />}
                       <span>{fetchingResume ? "Loading..." : "Download Resume / CV"}</span>
@@ -706,7 +674,7 @@ export default function AdminDashboard() {
                   <textarea rows={3} required value={noteText} onChange={(e) => setNoteText(e.target.value)} placeholder="Add feedback..." className="w-full bg-slate-900 border border-slate-800 focus:border-gold-500 rounded-xl p-3 text-xs text-slate-200 placeholder-slate-600 focus:outline-none resize-none" />
                   <div className="flex justify-between items-center">
                     <button type="button" onClick={() => setDeleteConfirmation({ type: "applicant", id: selectedApplicant.id })} className="px-4 py-2 rounded-xl bg-rose-900/20 hover:bg-rose-900/30 text-rose-400 font-semibold text-xs transition-colors flex items-center space-x-1.5 hover:cursor-pointer"><Trash2 className="h-3.5 w-3.5" /><span>Delete Applicant</span></button>
-                    <button type="submit" disabled={savingNote} className="px-4 py-2 rounded-xl bg-gold-600 hover:bg-gold-500 text-white font-semibold text-xs transition-colors flex items-center space-x-1.5 hover:cursor-pointer"><Plus className="h-3.5 w-3.5" /><span>{savingNote ? "Saving..." : "Add Note"}</span></button>
+                    <button type="submit" disabled={savingNote} className="px-4 py-2 rounded-xl bg-gold-600 hover:bg-gold-500 text-white font-semibold text-xs transition-colors flex items-center space-x-1.5 hover:cursor-pointer"><span>{savingNote ? "Saving..." : "Add Note"}</span></button>
                   </div>
                 </form>
               </div>
