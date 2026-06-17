@@ -43,7 +43,7 @@ interface Applicant {
   gender: string;
   nationality: string;
   current_location: string;
-  positionId: string;
+  positionId?: string;
   positionTitle: string;
   passType: string;
   linkedin?: string;
