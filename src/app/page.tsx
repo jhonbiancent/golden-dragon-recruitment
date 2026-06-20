@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Turnstile from "react-turnstile";
 import { 
   Briefcase, 
   MapPin, 
@@ -42,6 +43,7 @@ interface GroupedCategory {
 }
 
 export default function Home() {
+  const [token, setToken] = useState<string | null>(null);
   const [jobs, setJobs] = useState<JobPosition[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<GroupedCategory | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -741,11 +743,17 @@ export default function Home() {
                       <p className="text-[10px] text-slate-500 mt-2 ml-1">Must be PDF format. Maximum size 5MB.</p>
                     </div>
                   </div>
-
+                    {/* Turnstile Widget */}
+                    <div className="flex justify-center items-center">
+                      <Turnstile sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!} onVerify={setToken} />
+                    </div>
+                          
                   {/* Submit Button */}
                   <div className="border-t border-slate-800 pt-8 flex items-center justify-end space-x-6">
-                    <button
-                      type="button"
+                    
+                      <button
+                        type="button"
+                        disabled={!token} 
                       onClick={() => setIsModalOpen(false)}
                       className="px-6 py-3 rounded-2xl border border-slate-800 hover:bg-slate-900 text-slate-400 hover:text-slate-200 text-sm font-bold transition-all hover:cursor-pointer"
                     >
@@ -763,7 +771,7 @@ export default function Home() {
                         </div>
                       ) : (
                         <>
-                          <span>Submit Portal</span>
+                          <span>Submit</span>
                           <Send className="h-4 w-4" />
                         </>
                       )}
