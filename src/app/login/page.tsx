@@ -45,7 +45,6 @@ export default function LoginPage() {
         </div>
 
         {/* Turnstile Widget */}
-        {/* Replace your_site_key_here with your actual site key */}
         <Turnstile sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!} onVerify={setToken} />
         
         <button 
